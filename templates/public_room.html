@@ -51,24 +51,6 @@
 <!-- ─── TAB: SCHEDULE ─── -->
 <div class="tab-content" id="tab-schedule">
 
-    <!-- LEGEND -->
-    {% if subject_colors %}
-    <div class="room-legend">
-        {% set seen = namespace(codes=[]) %}
-        {% for day in days %}
-            {% for sched in schedule_by_day[day] %}
-                {% if sched.subject_code not in seen.codes %}
-                    {% set seen.codes = seen.codes + [sched.subject_code] %}
-                    <div class="legend-pill" style="background: {{ subject_colors[sched.subject_code] }}">
-                        <span class="legend-pill-code">{{ sched.subject_code }}</span>
-                        <span class="legend-pill-desc">{{ sched.subject_description }}</span>
-                    </div>
-                {% endif %}
-            {% endfor %}
-        {% endfor %}
-    </div>
-    {% endif %}
-
     <!-- DESKTOP TABLE -->
     <div class="schedule-wrap desktop-only">
         {% set time_slots = [
