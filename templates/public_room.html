@@ -1,279 +1,173 @@
-/* ─────────────────────────────────────────
-   ROOM PUBLIC PAGE - STANDALONE
-───────────────────────────────────────── */
-:root {
-    --primary: #c0392b;
-    --primary-dark: #96281b;
-    --bg: #0d0d0d;
-    --bg-card: #1a1a1a;
-    --bg-card2: #222;
-    --border: #2e2e2e;
-    --text: #f0f0f0;
-    --text-muted: #888;
-    --radius: 10px;
-}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ room.name }} — ACSI College Iloilo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/room.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
 
-* { margin: 0; padding: 0; box-sizing: border-box; }
+<!-- HEADER -->
+<div class="room-header">
+    <img src="{{ url_for('static', filename='assets/acsi_logo.png') }}" alt="ACSI Logo" class="room-logo">
+    <div class="room-header-text">
+        <h1 class="room-school">ACSI College Iloilo</h1>
+        <p class="room-tagline">Excellence in Education</p>
+        {% if active_semester %}
+        <p class="room-semester">{{ active_semester.label }}</p>
+        {% endif %}
+    </div>
+</div>
 
-body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-}
+<!-- ROOM TITLE -->
+<div class="room-title-bar">
+    <h2 class="room-name"><i class="fas fa-door-open"></i> {{ room.name }}</h2>
+    <p class="room-subtitle">Class Schedule</p>
+</div>
 
-/* HEADER */
-.room-header {
-    background: linear-gradient(135deg, #1a0505 0%, #0d0d0d 100%);
-    border-bottom: 2px solid var(--primary);
-    padding: 1.25rem 1.5rem;
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-}
+<!-- LEGEND -->
+{% if subject_colors %}
+<div class="room-legend">
+    {% set seen = namespace(codes=[]) %}
+    {% for day in days %}
+        {% for sched in schedule_by_day[day] %}
+            {% if sched.subject_code not in seen.codes %}
+                {% set seen.codes = seen.codes + [sched.subject_code] %}
+                <div class="legend-pill" style="background: {{ subject_colors[sched.subject_code] }}">
+                    <span class="legend-pill-code">{{ sched.subject_code }}</span>
+                    <span class="legend-pill-desc">{{ sched.subject_description }}</span>
+                </div>
+            {% endif %}
+        {% endfor %}
+    {% endfor %}
+</div>
+{% endif %}
 
-.room-logo {
-    width: 60px;
-    height: 60px;
-    object-fit: contain;
-    border-radius: 50%;
-    border: 2px solid var(--primary);
-    flex-shrink: 0;
-}
+<!-- DESKTOP SCHEDULE TABLE -->
+<div class="schedule-wrap desktop-only">
+    {% set time_slots = [
+        '09:00','09:30','10:00','10:30','11:00','11:30',
+        '12:00','12:30','13:00','13:30','14:00','14:30',
+        '15:00','15:30','16:00','16:30','17:00','17:30'
+    ] %}
 
-.room-school {
-    font-size: 1.1rem;
-    font-weight: 800;
-    color: var(--primary);
-}
+    {% set skip = namespace(cells={}) %}
 
-.room-tagline {
-    font-size: 0.72rem;
-    color: var(--text-muted);
-    letter-spacing: 2px;
-    text-transform: uppercase;
-}
+    <table class="sched-table">
+        <thead>
+            <tr>
+                <th class="th-time">Time</th>
+                {% for day in days %}
+                <th class="th-day">{{ day[:3] }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for slot in time_slots %}
+            {% set slot_hour = slot.split(':')[0]|int %}
+            {% set slot_min = slot.split(':')[1]|int %}
+            {% set slot_total = slot_hour * 60 + slot_min %}
 
-.room-semester {
-    font-size: 0.8rem;
-    color: var(--text);
-    margin-top: 0.25rem;
-    background: rgba(192,57,43,0.15);
-    border: 1px solid var(--primary);
-    display: inline-block;
-    padding: 0.2rem 0.75rem;
-    border-radius: 999px;
-}
+            {% if slot_min == 0 %}
+                {% set display_hour = slot_hour if slot_hour <= 12 else slot_hour - 12 %}
+                {% set display_hour = 12 if display_hour == 0 else display_hour %}
+                {% set ampm = 'AM' if slot_hour < 12 else 'PM' %}
+                {% set time_label = display_hour|string + ':00 ' + ampm %}
+            {% else %}
+                {% set display_hour = slot_hour if slot_hour <= 12 else slot_hour - 12 %}
+                {% set display_hour = 12 if display_hour == 0 else display_hour %}
+                {% set ampm = 'AM' if slot_hour < 12 else 'PM' %}
+                {% set time_label = display_hour|string + ':30 ' + ampm %}
+            {% endif %}
 
-/* ROOM TITLE */
-.room-title-bar {
-    background: var(--bg-card);
-    border-bottom: 1px solid var(--border);
-    padding: 1rem 1.5rem;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-}
+            <tr>
+                <td class="td-time">{{ time_label }}</td>
+                {% for day in days %}
+                {% set cell_key = day + '_' + slot %}
+                {% if cell_key not in skip.cells %}
+                    {% set found = namespace(sched=none) %}
+                    {% for s in schedule_by_day[day] %}
+                        {% set s_hour = s.time_start.hour %}
+                        {% set s_min = s.time_start.minute %}
+                        {% set s_total = s_hour * 60 + s_min %}
+                        {% if s_total == slot_total and found.sched is none %}
+                            {% set found.sched = s %}
+                        {% endif %}
+                    {% endfor %}
 
-.room-name {
-    font-size: 1.4rem;
-    font-weight: 800;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    color: var(--text);
-}
+                    {% if found.sched is not none %}
+                        {% set s = found.sched %}
+                        {% set e_hour = s.time_end.hour %}
+                        {% set e_min = s.time_end.minute %}
+                        {% set e_total = e_hour * 60 + e_min %}
+                        {% set duration = ((e_total - slot_total) / 30)|int %}
 
-.room-name i { color: var(--primary); }
-.room-subtitle { font-size: 0.8rem; color: var(--text-muted); }
+                        {% for skip_slot in time_slots %}
+                            {% set sk_hour = skip_slot.split(':')[0]|int %}
+                            {% set sk_min = skip_slot.split(':')[1]|int %}
+                            {% set sk_total = sk_hour * 60 + sk_min %}
+                            {% if sk_total > slot_total and sk_total < e_total %}
+                                {% set skip.cells = skip.cells.update({day + '_' + skip_slot: true}) or skip.cells %}
+                            {% endif %}
+                        {% endfor %}
 
-/* LEGEND */
-.room-legend {
-    padding: 1rem 1.5rem;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    background: var(--bg-card);
-    border-bottom: 1px solid var(--border);
-}
+                        <td class="td-sched" rowspan="{{ duration }}" style="background: {{ subject_colors[s.subject_code] }}; border-left: 4px solid rgba(0,0,0,0.2);">
+                            <div class="sched-inner">
+                                <div class="sched-code">{{ s.subject_code }}</div>
+                                <div class="sched-desc">{{ s.subject_description }}</div>
+                                <div class="sched-info">
+                                    <span><i class="fas fa-user"></i> {{ s.instructor }}</span>
+                                    <span><i class="fas fa-clock"></i> {{ s.time_start.strftime('%I:%M %p') }} - {{ s.time_end.strftime('%I:%M %p') }}</span>
+                                </div>
+                            </div>
+                        </td>
+                    {% else %}
+                        <td class="td-empty"></td>
+                    {% endif %}
+                {% endif %}
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
 
-.legend-pill {
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-    padding: 0.3rem 0.75rem;
-    border-radius: 999px;
-    font-size: 0.75rem;
-    color: white;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.4);
-}
+<!-- MOBILE SCHEDULE -->
+<div class="mobile-only">
+    {% for day in days %}
+    {% if schedule_by_day[day] %}
+    <div class="mobile-day">
+        <div class="mobile-day-header">{{ day }}</div>
+        {% for sched in schedule_by_day[day] %}
+        <div class="mobile-sched" style="border-left: 5px solid {{ subject_colors[sched.subject_code] }}; background: {{ subject_colors[sched.subject_code] }}22">
+            <div class="mobile-time">
+                <i class="fas fa-clock"></i>
+                {{ sched.time_start.strftime('%I:%M %p') }} — {{ sched.time_end.strftime('%I:%M %p') }}
+            </div>
+            <div class="mobile-code" style="color: {{ subject_colors[sched.subject_code] }}">{{ sched.subject_code }}</div>
+            <div class="mobile-desc">{{ sched.subject_description }}</div>
+            <div class="mobile-instructor"><i class="fas fa-user"></i> {{ sched.instructor }}</div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% endfor %}
+</div>
 
-.legend-pill-code { font-weight: 800; }
-.legend-pill-desc { opacity: 0.9; }
+<!-- ROOM RULES -->
+{% if room.rules %}
+<div class="room-rules">
+    <h3 class="rules-title"><i class="fas fa-clipboard-list"></i> Room Rules</h3>
+    <div class="rules-body">{{ room.rules }}</div>
+</div>
+{% endif %}
 
-/* SCHEDULE TABLE */
-.schedule-wrap {
-    padding: 1.5rem;
-    overflow-x: auto;
-}
+<!-- FOOTER -->
+<div class="room-footer">
+    <p>© 2026 ACSI College Iloilo — Room Schedule System</p>
+</div>
 
-.sched-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.8rem;
-    min-width: 650px;
-    table-layout: fixed;
-}
-
-.th-time {
-    width: 80px;
-    background: var(--bg-card2);
-    color: var(--text-muted);
-    padding: 0.6rem;
-    text-align: center;
-    border: 1px solid var(--border);
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: 0.5px;
-}
-
-.th-day {
-    background: var(--primary);
-    color: white;
-    padding: 0.6rem;
-    text-align: center;
-    border: 1px solid var(--primary-dark);
-    font-size: 0.8rem;
-    font-weight: 700;
-    letter-spacing: 1px;
-}
-
-.td-time {
-    background: var(--bg-card2);
-    color: var(--text-muted);
-    padding: 0.4rem 0.5rem;
-    text-align: center;
-    border: 1px solid var(--border);
-    font-size: 0.72rem;
-    white-space: nowrap;
-    vertical-align: top;
-}
-
-.td-empty {
-    background: var(--bg);
-    border: 1px solid var(--border);
-    min-height: 30px;
-}
-
-.td-sched {
-    border: 1px solid rgba(0,0,0,0.2);
-    padding: 0.4rem;
-    vertical-align: top;
-    color: white;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.4);
-}
-
-.sched-inner {
-    display: flex;
-    flex-direction: column;
-    gap: 0.2rem;
-    height: 100%;
-}
-
-.sched-code {
-    font-weight: 800;
-    font-size: 0.82rem;
-    line-height: 1.2;
-}
-
-.sched-desc {
-    font-size: 0.72rem;
-    opacity: 0.9;
-    line-height: 1.2;
-}
-
-.sched-info {
-    display: flex;
-    flex-direction: column;
-    gap: 0.1rem;
-    margin-top: auto;
-    font-size: 0.65rem;
-    opacity: 0.85;
-}
-
-/* MOBILE */
-.desktop-only { display: block; }
-.mobile-only { display: none; }
-
-.mobile-day {
-    margin: 1rem;
-    border-radius: var(--radius);
-    overflow: hidden;
-    border: 1px solid var(--border);
-}
-
-.mobile-day-header {
-    background: var(--primary);
-    color: white;
-    padding: 0.6rem 1rem;
-    font-weight: 700;
-    font-size: 0.875rem;
-}
-
-.mobile-sched {
-    padding: 0.75rem 1rem;
-    border-bottom: 1px solid var(--border);
-}
-
-.mobile-time { font-size: 0.72rem; color: var(--text-muted); margin-bottom: 0.25rem; }
-.mobile-code { font-size: 0.95rem; font-weight: 800; margin-bottom: 0.15rem; }
-.mobile-desc { font-size: 0.82rem; margin-bottom: 0.15rem; }
-.mobile-instructor { font-size: 0.75rem; color: var(--text-muted); }
-
-/* RULES */
-.room-rules {
-    margin: 1.5rem;
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-left: 4px solid var(--primary);
-    border-radius: var(--radius);
-    padding: 1.25rem;
-}
-
-.rules-title {
-    font-size: 0.95rem;
-    font-weight: 700;
-    margin-bottom: 0.75rem;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    color: var(--primary);
-}
-
-.rules-body {
-    font-size: 0.85rem;
-    color: var(--text-muted);
-    line-height: 1.8;
-    white-space: pre-line;
-}
-
-/* FOOTER */
-.room-footer {
-    text-align: center;
-    padding: 1.5rem;
-    font-size: 0.75rem;
-    color: var(--text-muted);
-    border-top: 1px solid var(--border);
-    margin-top: 1rem;
-}
-
-/* RESPONSIVE */
-@media (max-width: 768px) {
-    .desktop-only { display: none; }
-    .mobile-only { display: block; }
-    .room-header { padding: 1rem; }
-    .room-title-bar { padding: 0.75rem 1rem; }
-    .room-name { font-size: 1.1rem; }
-}
+</body>
+</html>
