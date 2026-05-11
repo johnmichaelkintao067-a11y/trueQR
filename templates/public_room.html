@@ -1,137 +1,279 @@
-{% extends "base.html" %}
-{% block title %}{{ room.name }} Schedule — ACSI College Iloilo{% endblock %}
+/* ─────────────────────────────────────────
+   ROOM PUBLIC PAGE - STANDALONE
+───────────────────────────────────────── */
+:root {
+    --primary: #c0392b;
+    --primary-dark: #96281b;
+    --bg: #0d0d0d;
+    --bg-card: #1a1a1a;
+    --bg-card2: #222;
+    --border: #2e2e2e;
+    --text: #f0f0f0;
+    --text-muted: #888;
+    --radius: 10px;
+}
 
-{% block content %}
-<!-- PAGE HEADER -->
-<section class="page-header">
-    <div class="container">
-        <h1 class="page-title"><i class="fas fa-door-open"></i> {{ room.name }}</h1>
-        {% if active_semester %}
-        <p class="page-sub"><i class="fas fa-calendar-alt"></i> {{ active_semester.label }}</p>
-        {% else %}
-        <p class="page-sub">No active semester set.</p>
-        {% endif %}
-    </div>
-</section>
+* { margin: 0; padding: 0; box-sizing: border-box; }
 
-<section class="section">
-    <div class="container">
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+}
 
-        <!-- LEGEND -->
-        {% if subject_colors %}
-        <div class="legend-card">
-            <h3 class="legend-title"><i class="fas fa-palette"></i> Subject Legend</h3>
-            <div class="legend-grid">
-                {% for code, color in subject_colors.items() %}
-                {% for sched in schedule_by_day.values() %}
-                {% for s in sched %}
-                {% if s.subject_code == code %}
-                <div class="legend-item">
-                    <span class="legend-dot" style="background:{{ color }}"></span>
-                    <span class="legend-code">{{ code }}</span>
-                    <span class="legend-desc">— {{ s.subject_description }}</span>
-                </div>
-                {% endif %}
-                {% endfor %}
-                {% endfor %}
-                {% endfor %}
-            </div>
-        </div>
-        {% endif %}
+/* HEADER */
+.room-header {
+    background: linear-gradient(135deg, #1a0505 0%, #0d0d0d 100%);
+    border-bottom: 2px solid var(--primary);
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
 
-        <!-- SCHEDULE TABLE - DESKTOP -->
-        <div class="schedule-table-wrap desktop-schedule">
-            <table class="schedule-table">
-                <thead>
-                    <tr>
-                        <th class="time-col">Time</th>
-                        {% for day in days %}
-                        <th>{{ day }}</th>
-                        {% endfor %}
-                    </tr>
-                </thead>
-                <tbody>
-                    {% set time_slots = [
-                        ('09:00', '09:30'), ('09:30', '10:00'),
-                        ('10:00', '10:30'), ('10:30', '11:00'),
-                        ('11:00', '11:30'), ('11:30', '12:00'),
-                        ('12:00', '12:30'), ('12:30', '13:00'),
-                        ('13:00', '13:30'), ('13:30', '14:00'),
-                        ('14:00', '14:30'), ('14:30', '15:00'),
-                        ('15:00', '15:30'), ('15:30', '16:00'),
-                        ('16:00', '16:30'), ('16:30', '17:00'),
-                        ('17:00', '17:30'), ('17:30', '18:00')
-                    ] %}
-                    {% for slot_start, slot_end in time_slots %}
-                    <tr>
-                        <td class="time-cell">
-                            {{ slot_start|replace('09','9') }}
-                            {% set hour = slot_start.split(':')[0]|int %}
-                            {% if hour < 12 %}AM{% else %}PM{% endif %}
-                        </td>
-                        {% for day in days %}
-                        <td class="schedule-cell">
-                            {% for sched in schedule_by_day[day] %}
-                            {% set s_start = sched.time_start.strftime('%H:%M') %}
-                            {% if s_start == slot_start %}
-                            {% set color = subject_colors[sched.subject_code] %}
-                            <div class="sched-block" style="background:{{ color }}">
-                                <span class="sched-code">{{ sched.subject_code }}</span>
-                                <span class="sched-desc">{{ sched.subject_description }}</span>
-                                <span class="sched-instructor"><i class="fas fa-user"></i> {{ sched.instructor }}</span>
-                                <span class="sched-time">
-                                    {{ sched.time_start.strftime('%I:%M %p') }} - {{ sched.time_end.strftime('%I:%M %p') }}
-                                </span>
-                            </div>
-                            {% endif %}
-                            {% endfor %}
-                        </td>
-                        {% endfor %}
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
+.room-logo {
+    width: 60px;
+    height: 60px;
+    object-fit: contain;
+    border-radius: 50%;
+    border: 2px solid var(--primary);
+    flex-shrink: 0;
+}
 
-        <!-- SCHEDULE CARDS - MOBILE -->
-        <div class="mobile-schedule">
-            {% for day in days %}
-            <div class="day-card">
-                <div class="day-card-header">
-                    <h3>{{ day }}</h3>
-                </div>
-                {% if schedule_by_day[day] %}
-                <div class="day-card-body">
-                    {% for sched in schedule_by_day[day] %}
-                    {% set color = subject_colors[sched.subject_code] %}
-                    <div class="mobile-sched-block" style="border-left: 5px solid {{ color }}; background: {{ color }}22">
-                        <div class="mobile-sched-time">
-                            <i class="fas fa-clock"></i>
-                            {{ sched.time_start.strftime('%I:%M %p') }} — {{ sched.time_end.strftime('%I:%M %p') }}
-                        </div>
-                        <div class="mobile-sched-code" style="color:{{ color }}">{{ sched.subject_code }}</div>
-                        <div class="mobile-sched-desc">{{ sched.subject_description }}</div>
-                        <div class="mobile-sched-instructor">
-                            <i class="fas fa-user"></i> {{ sched.instructor }}
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-                {% else %}
-                <div class="day-card-empty">No classes scheduled</div>
-                {% endif %}
-            </div>
-            {% endfor %}
-        </div>
+.room-school {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: var(--primary);
+}
 
-        <!-- ROOM RULES -->
-        {% if room.rules %}
-        <div class="rules-card">
-            <h3 class="rules-title"><i class="fas fa-clipboard-list"></i> Room Rules</h3>
-            <div class="rules-content">{{ room.rules }}</div>
-        </div>
-        {% endif %}
+.room-tagline {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
 
-    </div>
-</section>
-{% endblock %}
+.room-semester {
+    font-size: 0.8rem;
+    color: var(--text);
+    margin-top: 0.25rem;
+    background: rgba(192,57,43,0.15);
+    border: 1px solid var(--primary);
+    display: inline-block;
+    padding: 0.2rem 0.75rem;
+    border-radius: 999px;
+}
+
+/* ROOM TITLE */
+.room-title-bar {
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border);
+    padding: 1rem 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.room-name {
+    font-size: 1.4rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text);
+}
+
+.room-name i { color: var(--primary); }
+.room-subtitle { font-size: 0.8rem; color: var(--text-muted); }
+
+/* LEGEND */
+.room-legend {
+    padding: 1rem 1.5rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border);
+}
+
+.legend-pill {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.3rem 0.75rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    color: white;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+}
+
+.legend-pill-code { font-weight: 800; }
+.legend-pill-desc { opacity: 0.9; }
+
+/* SCHEDULE TABLE */
+.schedule-wrap {
+    padding: 1.5rem;
+    overflow-x: auto;
+}
+
+.sched-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.8rem;
+    min-width: 650px;
+    table-layout: fixed;
+}
+
+.th-time {
+    width: 80px;
+    background: var(--bg-card2);
+    color: var(--text-muted);
+    padding: 0.6rem;
+    text-align: center;
+    border: 1px solid var(--border);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+.th-day {
+    background: var(--primary);
+    color: white;
+    padding: 0.6rem;
+    text-align: center;
+    border: 1px solid var(--primary-dark);
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+
+.td-time {
+    background: var(--bg-card2);
+    color: var(--text-muted);
+    padding: 0.4rem 0.5rem;
+    text-align: center;
+    border: 1px solid var(--border);
+    font-size: 0.72rem;
+    white-space: nowrap;
+    vertical-align: top;
+}
+
+.td-empty {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    min-height: 30px;
+}
+
+.td-sched {
+    border: 1px solid rgba(0,0,0,0.2);
+    padding: 0.4rem;
+    vertical-align: top;
+    color: white;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+}
+
+.sched-inner {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    height: 100%;
+}
+
+.sched-code {
+    font-weight: 800;
+    font-size: 0.82rem;
+    line-height: 1.2;
+}
+
+.sched-desc {
+    font-size: 0.72rem;
+    opacity: 0.9;
+    line-height: 1.2;
+}
+
+.sched-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    margin-top: auto;
+    font-size: 0.65rem;
+    opacity: 0.85;
+}
+
+/* MOBILE */
+.desktop-only { display: block; }
+.mobile-only { display: none; }
+
+.mobile-day {
+    margin: 1rem;
+    border-radius: var(--radius);
+    overflow: hidden;
+    border: 1px solid var(--border);
+}
+
+.mobile-day-header {
+    background: var(--primary);
+    color: white;
+    padding: 0.6rem 1rem;
+    font-weight: 700;
+    font-size: 0.875rem;
+}
+
+.mobile-sched {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.mobile-time { font-size: 0.72rem; color: var(--text-muted); margin-bottom: 0.25rem; }
+.mobile-code { font-size: 0.95rem; font-weight: 800; margin-bottom: 0.15rem; }
+.mobile-desc { font-size: 0.82rem; margin-bottom: 0.15rem; }
+.mobile-instructor { font-size: 0.75rem; color: var(--text-muted); }
+
+/* RULES */
+.room-rules {
+    margin: 1.5rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--primary);
+    border-radius: var(--radius);
+    padding: 1.25rem;
+}
+
+.rules-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--primary);
+}
+
+.rules-body {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    line-height: 1.8;
+    white-space: pre-line;
+}
+
+/* FOOTER */
+.room-footer {
+    text-align: center;
+    padding: 1.5rem;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    border-top: 1px solid var(--border);
+    margin-top: 1rem;
+}
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+    .desktop-only { display: none; }
+    .mobile-only { display: block; }
+    .room-header { padding: 1rem; }
+    .room-title-bar { padding: 0.75rem 1rem; }
+    .room-name { font-size: 1.1rem; }
+}
