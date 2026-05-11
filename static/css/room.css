@@ -277,3 +277,52 @@ body {
     .room-title-bar { padding: 0.75rem 1rem; }
     .room-name { font-size: 1.1rem; }
 }
+
+.admin-back-btn {
+    margin-left: auto;
+    background: rgba(192,57,43,0.2);
+    border: 1px solid var(--primary);
+    color: var(--primary);
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    text-decoration: none;
+    transition: all 0.2s;
+    flex-shrink: 0;
+}
+
+.admin-back-btn:hover {
+    background: var(--primary);
+    color: white;
+}
+
+/* SCAN AGAIN */
+.scan-again-wrap {
+    padding: 1.5rem 1rem;
+    text-align: center;
+}
+
+.scan-again-btn {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 0.85rem 2rem;
+    border-radius: 999px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.2s;
+    box-shadow: 0 4px 15px rgba(192,57,43,0.3);
+}
+
+.scan-again-btn:hover {
+    background: var(--primary-dark);
+    transform: translateY(-2px);
+}
