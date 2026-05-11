@@ -33,6 +33,15 @@ class Subject(db.Model):
     subject_code = db.Column(db.String(50), nullable=False)
     subject_description = db.Column(db.String(255), nullable=False)
 
+class Instructor(db.Model):
+    __tablename__ = 'instructors'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    email = db.Column(db.String(100), nullable=True)
+    contact = db.Column(db.String(50), nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    schedules = db.relationship('Schedule', backref='instructor_obj', lazy=True)
+
 class Schedule(db.Model):
     __tablename__ = 'schedules'
     id = db.Column(db.Integer, primary_key=True)
@@ -41,6 +50,7 @@ class Schedule(db.Model):
     subject_code = db.Column(db.String(50), nullable=False)
     subject_description = db.Column(db.String(255), nullable=False)
     instructor = db.Column(db.String(100), nullable=False)
+    instructor_id = db.Column(db.Integer, db.ForeignKey('instructors.id'), nullable=True)
     day = db.Column(db.Enum('Monday','Tuesday','Wednesday','Thursday','Friday'), nullable=False)
     time_start = db.Column(db.Time, nullable=False)
     time_end = db.Column(db.Time, nullable=False)

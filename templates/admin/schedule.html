@@ -80,8 +80,18 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label class="form-label">INSTRUCTOR <span class="required">*</span></label>
-                        <input type="text" name="instructor" class="form-input"
-                            placeholder="e.g. Juan Dela Cruz" required>
+                        <select name="instructor_id" id="instructorSelect" class="form-input">
+                            <option value="">-- Select from Library --</option>
+                            {% for instr in instructors %}
+                            <option value="{{ instr.id }}">{{ instr.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">OR TYPE INSTRUCTOR NAME <span class="optional">(if not in library)</span></label>
+                        <input type="text" name="instructor_name" id="instructorName" class="form-input"
+                            placeholder="e.g. Juan Dela Cruz">
+                        <p class="form-hint">Library selection takes priority over typed name.</p>
                     </div>
                 </div>
 
@@ -116,7 +126,19 @@
                             <td>{{ sched.time_start.strftime('%I:%M %p') }} - {{ sched.time_end.strftime('%I:%M %p') }}</td>
                             <td><strong>{{ sched.subject_code }}</strong></td>
                             <td>{{ sched.subject_description }}</td>
-                            <td>{{ sched.instructor }}</td>
+                            <td>
+                                {{ sched.instructor }}
+                                {% if sched.instructor_obj %}
+                                <span class="text-muted" style="font-size:0.72rem;">
+                                    {% if sched.instructor_obj.email %}
+                                    <br><i class="fas fa-envelope"></i> {{ sched.instructor_obj.email }}
+                                    {% endif %}
+                                    {% if sched.instructor_obj.contact %}
+                                    <br><i class="fas fa-phone"></i> {{ sched.instructor_obj.contact }}
+                                    {% endif %}
+                                </span>
+                                {% endif %}
+                            </td>
                             <td>
                                 <form method="POST" action="{{ url_for('admin_schedule_delete', sched_id=sched.id) }}"
                                     style="display:inline"
@@ -148,7 +170,6 @@
 <script>
 // Subject autocomplete
 const subjects = [];
-
 fetch('/admin/subjects/api')
     .then(res => res.json())
     .then(data => subjects.push(...data));
@@ -161,12 +182,10 @@ codeInput.addEventListener('input', function() {
     const val = this.value.toLowerCase();
     suggestBox.innerHTML = '';
     if (!val) return;
-
     const matches = subjects.filter(s =>
         s.code.toLowerCase().includes(val) ||
         s.description.toLowerCase().includes(val)
     );
-
     matches.slice(0, 6).forEach(s => {
         const div = document.createElement('div');
         div.className = 'suggestion-item';
@@ -181,8 +200,16 @@ codeInput.addEventListener('input', function() {
 });
 
 document.addEventListener('click', function(e) {
-    if (!codeInput.contains(e.target)) {
-        suggestBox.innerHTML = '';
+    if (!codeInput.contains(e.target)) suggestBox.innerHTML = '';
+});
+
+// Clear typed name when library instructor selected
+document.getElementById('instructorSelect').addEventListener('change', function() {
+    if (this.value) {
+        document.getElementById('instructorName').value = '';
+        document.getElementById('instructorName').disabled = true;
+    } else {
+        document.getElementById('instructorName').disabled = false;
     }
 });
 </script>

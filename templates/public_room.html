@@ -32,149 +32,230 @@
     <p class="room-subtitle">Class Schedule</p>
 </div>
 
-<!-- LEGEND -->
-{% if subject_colors %}
-<div class="room-legend">
-    {% set seen = namespace(codes=[]) %}
-    {% for day in days %}
-        {% for sched in schedule_by_day[day] %}
-            {% if sched.subject_code not in seen.codes %}
-                {% set seen.codes = seen.codes + [sched.subject_code] %}
-                <div class="legend-pill" style="background: {{ subject_colors[sched.subject_code] }}">
-                    <span class="legend-pill-code">{{ sched.subject_code }}</span>
-                    <span class="legend-pill-desc">{{ sched.subject_description }}</span>
-                </div>
-            {% endif %}
-        {% endfor %}
-    {% endfor %}
+<!-- TAB NAVIGATION -->
+<div class="tab-nav">
+    <button class="tab-btn active" onclick="switchTab('schedule')">
+        <i class="fas fa-calendar"></i> Schedule
+    </button>
+    <button class="tab-btn" onclick="switchTab('rules')">
+        <i class="fas fa-clipboard-list"></i> Rules
+    </button>
+    <button class="tab-btn" onclick="switchTab('subjects')">
+        <i class="fas fa-book"></i> Subjects
+    </button>
+    <button class="tab-btn" onclick="switchTab('instructors')">
+        <i class="fas fa-chalkboard-teacher"></i> Instructors
+    </button>
 </div>
-{% endif %}
 
-<!-- DESKTOP SCHEDULE TABLE -->
-<div class="schedule-wrap desktop-only">
-    {% set time_slots = [
-        '09:00','09:30','10:00','10:30','11:00','11:30',
-        '12:00','12:30','13:00','13:30','14:00','14:30',
-        '15:00','15:30','16:00','16:30','17:00','17:30','18:00'
-    ] %}
+<!-- ─── TAB: SCHEDULE ─── -->
+<div class="tab-content" id="tab-schedule">
 
-    {% set skip = namespace(cells={}) %}
-
-    <table class="sched-table">
-        <thead>
-            <tr>
-                <th class="th-time">Time</th>
-                {% for day in days %}
-                <th class="th-day">{{ day[:3] }}</th>
-                {% endfor %}
-            </tr>
-        </thead>
-        <tbody>
-            {% for slot in time_slots %}
-            {% set slot_hour = slot.split(':')[0]|int %}
-            {% set slot_min = slot.split(':')[1]|int %}
-            {% set slot_total = slot_hour * 60 + slot_min %}
-
-            {% if slot_min == 0 %}
-                {% set display_hour = slot_hour if slot_hour <= 12 else slot_hour - 12 %}
-                {% set display_hour = 12 if display_hour == 0 else display_hour %}
-                {% set ampm = 'AM' if slot_hour < 12 else 'PM' %}
-                {% set time_label = display_hour|string + ':00 ' + ampm %}
-            {% else %}
-                {% set display_hour = slot_hour if slot_hour <= 12 else slot_hour - 12 %}
-                {% set display_hour = 12 if display_hour == 0 else display_hour %}
-                {% set ampm = 'AM' if slot_hour < 12 else 'PM' %}
-                {% set time_label = display_hour|string + ':30 ' + ampm %}
-            {% endif %}
-
-            <tr>
-                <td class="td-time">{{ time_label }}</td>
-                {% for day in days %}
-                {% set cell_key = day + '_' + slot %}
-                {% if cell_key not in skip.cells %}
-                    {% set found = namespace(sched=none) %}
-                    {% for s in schedule_by_day[day] %}
-                        {% set s_hour = s.time_start.hour %}
-                        {% set s_min = s.time_start.minute %}
-                        {% set s_total = s_hour * 60 + s_min %}
-                        {% if s_total == slot_total and found.sched is none %}
-                            {% set found.sched = s %}
-                        {% endif %}
-                    {% endfor %}
-
-                    {% if found.sched is not none %}
-                        {% set s = found.sched %}
-                        {% set e_hour = s.time_end.hour %}
-                        {% set e_min = s.time_end.minute %}
-                        {% set e_total = e_hour * 60 + e_min %}
-                        {% set duration = ((e_total - slot_total) / 30)|int %}
-
-                        {% for skip_slot in time_slots %}
-                            {% set sk_hour = skip_slot.split(':')[0]|int %}
-                            {% set sk_min = skip_slot.split(':')[1]|int %}
-                            {% set sk_total = sk_hour * 60 + sk_min %}
-                            {% if sk_total > slot_total and sk_total < e_total %}
-                                {% set skip.cells = skip.cells.update({day + '_' + skip_slot: true}) or skip.cells %}
-                            {% endif %}
-                        {% endfor %}
-
-                        <td class="td-sched" rowspan="{{ duration }}" style="background: {{ subject_colors[s.subject_code] }}; border-left: 4px solid rgba(0,0,0,0.2);">
-                            <div class="sched-inner">
-                                <div class="sched-code">{{ s.subject_code }}</div>
-                                <div class="sched-desc">{{ s.subject_description }}</div>
-                                <div class="sched-info">
-                                    <span><i class="fas fa-user"></i> {{ s.instructor }}</span>
-                                    <span><i class="fas fa-clock"></i> {{ s.time_start.strftime('%I:%M %p') }} - {{ s.time_end.strftime('%I:%M %p') }}</span>
-                                </div>
-                            </div>
-                        </td>
-                    {% else %}
-                        <td class="td-empty"></td>
-                    {% endif %}
+    <!-- LEGEND -->
+    {% if subject_colors %}
+    <div class="room-legend">
+        {% set seen = namespace(codes=[]) %}
+        {% for day in days %}
+            {% for sched in schedule_by_day[day] %}
+                {% if sched.subject_code not in seen.codes %}
+                    {% set seen.codes = seen.codes + [sched.subject_code] %}
+                    <div class="legend-pill" style="background: {{ subject_colors[sched.subject_code] }}">
+                        <span class="legend-pill-code">{{ sched.subject_code }}</span>
+                        <span class="legend-pill-desc">{{ sched.subject_description }}</span>
+                    </div>
                 {% endif %}
-                {% endfor %}
-            </tr>
             {% endfor %}
-        </tbody>
-    </table>
-</div>
-
-<!-- MOBILE SCHEDULE -->
-<div class="mobile-only">
-    {% for day in days %}
-    {% if schedule_by_day[day] %}
-    <div class="mobile-day">
-        <div class="mobile-day-header">{{ day }}</div>
-        {% for sched in schedule_by_day[day] %}
-        <div class="mobile-sched" style="border-left: 5px solid {{ subject_colors[sched.subject_code] }}; background: {{ subject_colors[sched.subject_code] }}22">
-            <div class="mobile-time">
-                <i class="fas fa-clock"></i>
-                {{ sched.time_start.strftime('%I:%M %p') }} — {{ sched.time_end.strftime('%I:%M %p') }}
-            </div>
-            <div class="mobile-code" style="color: {{ subject_colors[sched.subject_code] }}">{{ sched.subject_code }}</div>
-            <div class="mobile-desc">{{ sched.subject_description }}</div>
-            <div class="mobile-instructor"><i class="fas fa-user"></i> {{ sched.instructor }}</div>
-        </div>
         {% endfor %}
     </div>
     {% endif %}
-    {% endfor %}
 
-    <!-- SCAN AGAIN BUTTON -->
-    <div class="scan-again-wrap">
-        <button class="scan-again-btn" onclick="openCamera()">
-            <i class="fas fa-qrcode"></i> Scan Another Room
-        </button>
+    <!-- DESKTOP TABLE -->
+    <div class="schedule-wrap desktop-only">
+        {% set time_slots = [
+            '09:00','09:30','10:00','10:30','11:00','11:30',
+            '12:00','12:30','13:00','13:30','14:00','14:30',
+            '15:00','15:30','16:00','16:30','17:00','17:30','18:00'
+        ] %}
+        {% set skip = namespace(cells={}) %}
+        <table class="sched-table">
+            <thead>
+                <tr>
+                    <th class="th-time">Time</th>
+                    {% for day in days %}
+                    <th class="th-day">{{ day[:3] }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for slot in time_slots %}
+                {% set slot_hour = slot.split(':')[0]|int %}
+                {% set slot_min = slot.split(':')[1]|int %}
+                {% set slot_total = slot_hour * 60 + slot_min %}
+                {% if slot_min == 0 %}
+                    {% set display_hour = slot_hour if slot_hour <= 12 else slot_hour - 12 %}
+                    {% set display_hour = 12 if display_hour == 0 else display_hour %}
+                    {% set ampm = 'AM' if slot_hour < 12 else 'PM' %}
+                    {% set time_label = display_hour|string + ':00 ' + ampm %}
+                {% else %}
+                    {% set display_hour = slot_hour if slot_hour <= 12 else slot_hour - 12 %}
+                    {% set display_hour = 12 if display_hour == 0 else display_hour %}
+                    {% set ampm = 'AM' if slot_hour < 12 else 'PM' %}
+                    {% set time_label = display_hour|string + ':30 ' + ampm %}
+                {% endif %}
+                <tr>
+                    <td class="td-time">{{ time_label }}</td>
+                    {% for day in days %}
+                    {% set cell_key = day + '_' + slot %}
+                    {% if cell_key not in skip.cells %}
+                        {% set found = namespace(sched=none) %}
+                        {% for s in schedule_by_day[day] %}
+                            {% set s_total = s.time_start.hour * 60 + s.time_start.minute %}
+                            {% if s_total == slot_total and found.sched is none %}
+                                {% set found.sched = s %}
+                            {% endif %}
+                        {% endfor %}
+                        {% if found.sched is not none %}
+                            {% set s = found.sched %}
+                            {% set e_total = s.time_end.hour * 60 + s.time_end.minute %}
+                            {% set duration = ((e_total - slot_total) / 30)|int %}
+                            {% for skip_slot in time_slots %}
+                                {% set sk_total = skip_slot.split(':')[0]|int * 60 + skip_slot.split(':')[1]|int %}
+                                {% if sk_total > slot_total and sk_total < e_total %}
+                                    {% set skip.cells = skip.cells.update({day + '_' + skip_slot: true}) or skip.cells %}
+                                {% endif %}
+                            {% endfor %}
+                            <td class="td-sched" rowspan="{{ duration }}" style="background: {{ subject_colors[s.subject_code] }}; border-left: 4px solid rgba(0,0,0,0.2);">
+                                <div class="sched-inner">
+                                    <div class="sched-code">{{ s.subject_code }}</div>
+                                    <div class="sched-desc">{{ s.subject_description }}</div>
+                                    <div class="sched-info">
+                                        <span><i class="fas fa-user"></i> {{ s.instructor }}</span>
+                                        <span><i class="fas fa-clock"></i> {{ s.time_start.strftime('%I:%M %p') }} - {{ s.time_end.strftime('%I:%M %p') }}</span>
+                                    </div>
+                                </div>
+                            </td>
+                        {% else %}
+                            <td class="td-empty"></td>
+                        {% endif %}
+                    {% endif %}
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- MOBILE SCHEDULE -->
+    <div class="mobile-only">
+        <!-- DAY FILTER -->
+        <div class="day-filter">
+            <button class="day-btn active" onclick="filterDay('all')">All</button>
+            {% for day in days %}
+            <button class="day-btn" onclick="filterDay('{{ day }}')">{{ day[:3] }}</button>
+            {% endfor %}
+        </div>
+
+        {% for day in days %}
+        {% if schedule_by_day[day] %}
+        <div class="mobile-day" data-day="{{ day }}">
+            <div class="mobile-day-header">{{ day }}</div>
+            {% for sched in schedule_by_day[day] %}
+            <div class="mobile-sched" style="border-left: 5px solid {{ subject_colors[sched.subject_code] }}; background: {{ subject_colors[sched.subject_code] }}22">
+                <div class="mobile-time">
+                    <i class="fas fa-clock"></i>
+                    {{ sched.time_start.strftime('%I:%M %p') }} — {{ sched.time_end.strftime('%I:%M %p') }}
+                </div>
+                <div class="mobile-code" style="color: {{ subject_colors[sched.subject_code] }}">{{ sched.subject_code }}</div>
+                <div class="mobile-desc">{{ sched.subject_description }}</div>
+                <div class="mobile-instructor"><i class="fas fa-user"></i> {{ sched.instructor }}</div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% endfor %}
+
+        <div class="scan-hint">
+            <i class="fas fa-qrcode"></i>
+            To view another room's schedule, scan its QR code.
+        </div>
     </div>
 </div>
 
-<!-- ROOM RULES -->
-{% if room.rules %}
-<div class="room-rules">
-    <h3 class="rules-title"><i class="fas fa-clipboard-list"></i> Room Rules</h3>
-    <div class="rules-body">{{ room.rules }}</div>
+<!-- ─── TAB: RULES ─── -->
+<div class="tab-content hidden" id="tab-rules">
+    {% if room.rules %}
+    <div class="room-rules">
+        <h3 class="rules-title"><i class="fas fa-clipboard-list"></i> Room Rules</h3>
+        <div class="rules-body">{{ room.rules }}</div>
+    </div>
+    {% else %}
+    <div class="empty-tab">
+        <i class="fas fa-clipboard"></i>
+        <p>No rules have been set for this room.</p>
+    </div>
+    {% endif %}
 </div>
-{% endif %}
+
+<!-- ─── TAB: SUBJECTS ─── -->
+<div class="tab-content hidden" id="tab-subjects">
+    {% if seen_subjects %}
+    <div class="info-list">
+        {% for code, desc in seen_subjects.items() %}
+        {% set color = subject_colors[code] if code in subject_colors else '#888' %}
+        <div class="info-item">
+            <div class="info-color" style="background: {{ color }}"></div>
+            <div class="info-body">
+                <div class="info-title">{{ code }}</div>
+                <div class="info-sub">{{ desc }}</div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-tab">
+        <i class="fas fa-book-open"></i>
+        <p>No subjects scheduled for this room.</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- ─── TAB: INSTRUCTORS ─── -->
+<div class="tab-content hidden" id="tab-instructors">
+    {% if seen_instructors %}
+    <div class="info-list">
+        {% for key, instr in seen_instructors.items() %}
+        <div class="info-item">
+            <div class="info-avatar">
+                <i class="fas fa-chalkboard-teacher"></i>
+            </div>
+            <div class="info-body">
+                <div class="info-title">{{ instr.name }}</div>
+                {% if instr.email %}
+                <div class="info-contact">
+                    <i class="fas fa-envelope"></i>
+                    <a href="mailto:{{ instr.email }}">{{ instr.email }}</a>
+                </div>
+                {% endif %}
+                {% if instr.contact %}
+                <div class="info-contact">
+                    <i class="fas fa-phone"></i>
+                    <a href="tel:{{ instr.contact }}">{{ instr.contact }}</a>
+                </div>
+                {% endif %}
+                {% if not instr.email and not instr.contact %}
+                <div class="info-sub">No contact information available.</div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-tab">
+        <i class="fas fa-chalkboard-teacher"></i>
+        <p>No instructor information available.</p>
+    </div>
+    {% endif %}
+</div>
 
 <!-- FOOTER -->
 <div class="room-footer">
@@ -182,15 +263,27 @@
 </div>
 
 <script>
-function openCamera() {
-    // Try to open camera via QR scanner
-    // On mobile this will prompt camera access
-    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-        window.location.href = "https://trueqr.onrender.com";
-    } else {
-        // Fallback — open rooms list
-        window.location.href = "{{ url_for('public_rooms') }}";
-    }
+// Tab switching
+function switchTab(tab) {
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+    document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+    document.getElementById('tab-' + tab).classList.remove('hidden');
+    event.target.closest('.tab-btn').classList.add('active');
+}
+
+// Day filter (mobile only)
+function filterDay(day) {
+    document.querySelectorAll('.day-btn').forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+
+    const mobileDays = document.querySelectorAll('.mobile-day');
+    mobileDays.forEach(el => {
+        if (day === 'all' || el.dataset.day === day) {
+            el.style.display = 'block';
+        } else {
+            el.style.display = 'none';
+        }
+    });
 }
 </script>
 

@@ -1,7 +1,7 @@
 from flask import Flask, render_template, redirect, url_for, request, flash, jsonify, send_file
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from config import Config
-from models import db, Admin, Semester, Room, Subject, Schedule
+from models import db, Admin, Semester, Room, Subject, Schedule, Instructor
 import bcrypt
 import qrcode
 import io
@@ -19,7 +19,7 @@ login_manager.login_view = 'admin_login'
 
 @login_manager.user_loader
 def load_user(user_id):
-    return Admin.query.get(int(user_id))
+    return db.session.get(Admin, int(user_id))
 
 # ─────────────────────────────────────────
 # PUBLIC ROUTES
@@ -41,14 +41,14 @@ def public_rooms():
 def public_room(room_id):
     room = Room.query.get_or_404(room_id)
     active_semester = Semester.query.filter_by(is_active=True).first()
-    
+
     schedules = []
     if active_semester:
         schedules = Schedule.query.filter_by(
             room_id=room_id,
             semester_id=active_semester.id
         ).all()
-    
+
     # Build color map per subject code
     color_palette = [
         '#e74c3c','#3498db','#2ecc71','#f39c12','#9b59b6',
@@ -61,7 +61,7 @@ def public_room(room_id):
         if s.subject_code not in subject_colors:
             subject_colors[s.subject_code] = color_palette[color_index % len(color_palette)]
             color_index += 1
-    
+
     # Organize by day
     days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
     schedule_by_day = {day: [] for day in days}
@@ -69,13 +69,30 @@ def public_room(room_id):
         schedule_by_day[s.day].append(s)
     for day in days:
         schedule_by_day[day].sort(key=lambda x: x.time_start)
-    
+
+    # Build unique subjects and instructors for this room
+    seen_subjects = {}
+    seen_instructors = {}
+    for s in schedules:
+        if s.subject_code not in seen_subjects:
+            seen_subjects[s.subject_code] = s.subject_description
+        if s.instructor_id and s.instructor_id not in seen_instructors:
+            instr = db.session.get(Instructor, s.instructor_id)
+            if instr:
+                seen_instructors[instr.id] = instr
+        elif not s.instructor_id and s.instructor not in seen_instructors:
+            seen_instructors[s.instructor] = type('obj', (object,), {
+                'name': s.instructor, 'email': None, 'contact': None
+            })()
+
     return render_template('public_room.html',
         room=room,
         active_semester=active_semester,
         schedule_by_day=schedule_by_day,
         subject_colors=subject_colors,
-        days=days
+        days=days,
+        seen_subjects=seen_subjects,
+        seen_instructors=seen_instructors
     )
 
 # ─────────────────────────────────────────
@@ -113,10 +130,12 @@ def admin_dashboard():
     subjects = Subject.query.count()
     active_semester = Semester.query.filter_by(is_active=True).first()
     schedules = Schedule.query.count()
+    instructors = Instructor.query.count()
     return render_template('admin/dashboard.html',
         room_count=rooms,
         subject_count=subjects,
         schedule_count=schedules,
+        instructor_count=instructors,
         active_semester=active_semester
     )
 
@@ -216,7 +235,8 @@ def admin_schedule(room_id):
     semesters = Semester.query.order_by(Semester.created_at.desc()).all()
     active_semester = Semester.query.filter_by(is_active=True).first()
     subjects = Subject.query.order_by(Subject.subject_code).all()
-    
+    instructors = Instructor.query.order_by(Instructor.name).all()
+
     sem_id = request.args.get('semester_id', active_semester.id if active_semester else None)
     schedules = []
     selected_semester = None
@@ -226,7 +246,7 @@ def admin_schedule(room_id):
             room_id=room_id,
             semester_id=sem_id
         ).order_by(Schedule.day, Schedule.time_start).all()
-    
+
     days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
     return render_template('admin/schedule.html',
         room=room,
@@ -234,6 +254,7 @@ def admin_schedule(room_id):
         selected_semester=selected_semester,
         schedules=schedules,
         subjects=subjects,
+        instructors=instructors,
         days=days
     )
 
@@ -244,13 +265,21 @@ def admin_schedule_add(room_id):
     semester_id = request.form.get('semester_id')
     subject_code = request.form.get('subject_code')
     subject_description = request.form.get('subject_description')
-    instructor = request.form.get('instructor')
+    instructor_id = request.form.get('instructor_id')
+    instructor_name = request.form.get('instructor_name')
     day = request.form.get('day')
     time_start_str = request.form.get('time_start')
     time_end_str = request.form.get('time_end')
 
     time_start = datetime.strptime(time_start_str, '%H:%M').time()
     time_end = datetime.strptime(time_end_str, '%H:%M').time()
+
+    # Get instructor name for storage
+    if instructor_id:
+        instr = db.session.get(Instructor, int(instructor_id))
+        instructor_display = instr.name if instr else instructor_name
+    else:
+        instructor_display = instructor_name
 
     # Overlap check
     overlaps = Schedule.query.filter_by(
@@ -269,7 +298,8 @@ def admin_schedule_add(room_id):
         semester_id=semester_id,
         subject_code=subject_code,
         subject_description=subject_description,
-        instructor=instructor,
+        instructor=instructor_display,
+        instructor_id=int(instructor_id) if instructor_id else None,
         day=day,
         time_start=time_start,
         time_end=time_end
@@ -331,6 +361,62 @@ def admin_subjects_api():
     } for s in subjects])
 
 # ─────────────────────────────────────────
+# INSTRUCTOR LIBRARY
+# ─────────────────────────────────────────
+
+@app.route('/admin/instructors')
+@login_required
+def admin_instructors():
+    instructors = Instructor.query.order_by(Instructor.name).all()
+    return render_template('admin/instructors.html', instructors=instructors)
+
+@app.route('/admin/instructors/add', methods=['POST'])
+@login_required
+def admin_instructor_add():
+    name = request.form.get('name')
+    email = request.form.get('email')
+    contact = request.form.get('contact')
+    if name:
+        instructor = Instructor(name=name, email=email, contact=contact)
+        db.session.add(instructor)
+        db.session.commit()
+        flash('Instructor added successfully.', 'success')
+    return redirect(url_for('admin_instructors'))
+
+@app.route('/admin/instructors/<int:instr_id>/edit', methods=['GET', 'POST'])
+@login_required
+def admin_instructor_edit(instr_id):
+    instructor = Instructor.query.get_or_404(instr_id)
+    if request.method == 'POST':
+        instructor.name = request.form.get('name')
+        instructor.email = request.form.get('email')
+        instructor.contact = request.form.get('contact')
+        db.session.commit()
+        flash('Instructor updated.', 'success')
+        return redirect(url_for('admin_instructors'))
+    return render_template('admin/instructor_form.html', instructor=instructor)
+
+@app.route('/admin/instructors/<int:instr_id>/delete', methods=['POST'])
+@login_required
+def admin_instructor_delete(instr_id):
+    instructor = Instructor.query.get_or_404(instr_id)
+    db.session.delete(instructor)
+    db.session.commit()
+    flash('Instructor deleted.', 'success')
+    return redirect(url_for('admin_instructors'))
+
+@app.route('/admin/instructors/api')
+@login_required
+def admin_instructors_api():
+    instructors = Instructor.query.order_by(Instructor.name).all()
+    return jsonify([{
+        'id': i.id,
+        'name': i.name,
+        'email': i.email or '',
+        'contact': i.contact or ''
+    } for i in instructors])
+
+# ─────────────────────────────────────────
 # QR CODE
 # ─────────────────────────────────────────
 
@@ -345,16 +431,16 @@ def admin_qr(room_id):
 def admin_qr_download(room_id):
     room = Room.query.get_or_404(room_id)
     url = request.host_url + f'room/{room_id}'
-    
+
     qr = qrcode.QRCode(version=1, box_size=10, border=4)
     qr.add_data(url)
     qr.make(fit=True)
     img = qr.make_image(fill_color='black', back_color='white')
-    
+
     buf = io.BytesIO()
     img.save(buf, format='PNG')
     buf.seek(0)
-    
+
     return send_file(buf, mimetype='image/png',
                      as_attachment=True,
                      download_name=f'QR_{room.name}.png')
@@ -371,7 +457,7 @@ def admin_settings():
         current_password = request.form.get('current_password')
         new_password = request.form.get('new_password')
 
-        admin = Admin.query.get(current_user.id)
+        admin = db.session.get(Admin, current_user.id)
 
         if not bcrypt.checkpw(current_password.encode('utf-8'), admin.password_hash.encode('utf-8')):
             flash('Current password is incorrect.', 'error')

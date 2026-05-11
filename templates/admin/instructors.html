@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block title %}Instructors — ACSI Admin{% endblock %}
+
+{% block content %}
+<section class="admin-header">
+    <div class="container">
+        <div class="admin-header-content">
+            <div>
+                <h1 class="admin-title"><i class="fas fa-chalkboard-teacher"></i> Instructor Library</h1>
+                <p class="admin-sub">Manage reusable instructor information</p>
+            </div>
+            <a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline-sm">
+                <i class="fas fa-arrow-left"></i> Dashboard
+            </a>
+        </div>
+    </div>
+</section>
+
+<section class="section">
+    <div class="container">
+
+        <!-- ADD INSTRUCTOR FORM -->
+        <div class="admin-card">
+            <h2 class="card-title"><i class="fas fa-plus-circle"></i> Add New Instructor</h2>
+            <form method="POST" action="{{ url_for('admin_instructor_add') }}">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">FULL NAME <span class="required">*</span></label>
+                        <input type="text" name="name" class="form-input"
+                            placeholder="e.g. Juan Dela Cruz" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">EMAIL <span class="optional">(optional)</span></label>
+                        <input type="email" name="email" class="form-input"
+                            placeholder="e.g. juan@acsi.edu.ph">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">CONTACT NUMBER <span class="optional">(optional)</span></label>
+                        <input type="text" name="contact" class="form-input"
+                            placeholder="e.g. 09XX-XXX-XXXX">
+                    </div>
+                    <div class="form-group" style="flex: 0;">
+                        <label class="form-label">&nbsp;</label>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> Add
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- INSTRUCTOR LIST -->
+        <div class="admin-card">
+            <h2 class="card-title"><i class="fas fa-list"></i> All Instructors ({{ instructors|length }})</h2>
+            {% if instructors %}
+            <div class="table-wrap">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Contact</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for instructor in instructors %}
+                        <tr>
+                            <td>{{ loop.index }}</td>
+                            <td><strong>{{ instructor.name }}</strong></td>
+                            <td>{{ instructor.email or '—' }}</td>
+                            <td>{{ instructor.contact or '—' }}</td>
+                            <td class="table-actions">
+                                <a href="{{ url_for('admin_instructor_edit', instr_id=instructor.id) }}"
+                                    class="btn-sm btn-warning">
+                                    <i class="fas fa-edit"></i> Edit
+                                </a>
+                                <form method="POST" action="{{ url_for('admin_instructor_delete', instr_id=instructor.id) }}"
+                                    style="display:inline"
+                                    onsubmit="return confirm('Delete {{ instructor.name }}?')">
+                                    <button type="submit" class="btn-sm btn-danger">
+                                        <i class="fas fa-trash"></i> Delete
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <i class="fas fa-chalkboard-teacher"></i>
+                <p>No instructors added yet.</p>
+            </div>
+            {% endif %}
+        </div>
+
+    </div>
+</section>
+{% endblock %}

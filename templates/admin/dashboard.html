@@ -45,6 +45,11 @@
                 <p class="stat-label">Subjects in Library</p>
             </div>
             <div class="stat-card">
+                <i class="fas fa-chalkboard-teacher stat-icon"></i>
+                <h3 class="stat-number">{{ instructor_count }}</h3>
+                <p class="stat-label">Instructors</p>
+            </div>
+            <div class="stat-card">
                 <i class="fas fa-calendar-check stat-icon"></i>
                 <h3 class="stat-number">{{ schedule_count }}</h3>
                 <p class="stat-label">Total Schedules</p>
@@ -68,6 +73,11 @@
                 <i class="fas fa-book action-icon"></i>
                 <h3 class="action-title">Subject Library</h3>
                 <p class="action-sub">Manage reusable subject list</p>
+            </a>
+            <a href="{{ url_for('admin_instructors') }}" class="action-card">
+                <i class="fas fa-chalkboard-teacher action-icon"></i>
+                <h3 class="action-title">Instructor Library</h3>
+                <p class="action-sub">Manage instructors and their info</p>
             </a>
             <a href="{{ url_for('admin_settings') }}" class="action-card">
                 <i class="fas fa-cog action-icon"></i>
