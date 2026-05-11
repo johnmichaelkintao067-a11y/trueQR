@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Room Schedules — ACSI College Iloilo{% endblock %}
+
+{% block content %}
+<section class="page-header">
+    <div class="container">
+        <h1 class="page-title"><i class="fas fa-door-open"></i> Room Schedules</h1>
+        {% if active_semester %}
+        <p class="page-sub"><i class="fas fa-calendar-alt"></i> {{ active_semester.label }}</p>
+        {% else %}
+        <p class="page-sub">No active semester set.</p>
+        {% endif %}
+    </div>
+</section>
+
+<section class="section">
+    <div class="container">
+        {% if rooms %}
+        <div class="rooms-grid">
+            {% for room in rooms %}
+            <a href="{{ url_for('public_room', room_id=room.id) }}" class="room-card">
+                <div class="room-card-icon">
+                    <i class="fas fa-door-open"></i>
+                </div>
+                <div class="room-card-info">
+                    <h3 class="room-card-name">{{ room.name }}</h3>
+                    <p class="room-card-sub">Tap to view schedule →</p>
+                </div>
+                <div class="room-card-arrow">
+                    <i class="fas fa-chevron-right"></i>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-door-closed"></i>
+            <p>No rooms available yet.</p>
+        </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

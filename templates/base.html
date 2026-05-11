@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}ACSI College Iloilo{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar">
+    <div class="nav-container">
+        <a href="{{ url_for('index') }}" class="nav-brand">
+            <img src="{{ url_for('static', filename='assets/acsi_logo.png') }}" alt="ACSI Logo" class="nav-logo">
+            <div class="nav-brand-text">
+                <span class="nav-title">ACSI College Iloilo</span>
+                <span class="nav-subtitle">Excellence in Education</span>
+            </div>
+        </a>
+        <button class="nav-toggle" id="navToggle">
+            <i class="fas fa-bars"></i>
+        </button>
+        <ul class="nav-links" id="navLinks">
+            <li><a href="{{ url_for('index') }}" class="nav-link {% if request.endpoint == 'index' %}active{% endif %}">
+                <i class="fas fa-home"></i> Home
+            </a></li>
+            <li><a href="{{ url_for('public_rooms') }}" class="nav-link {% if request.endpoint == 'public_rooms' %}active{% endif %}">
+                <i class="fas fa-door-open"></i> Room Schedules
+            </a></li>
+            <li><a href="#" class="nav-link disabled">
+                <i class="fas fa-graduation-cap"></i> Grades <span class="coming-soon">Soon</span>
+            </a></li>
+            <li><a href="#" class="nav-link disabled">
+                <i class="fas fa-bullhorn"></i> Announcements <span class="coming-soon">Soon</span>
+            </a></li>
+            {% if current_user.is_authenticated %}
+            <li><a href="{{ url_for('admin_dashboard') }}" class="nav-link nav-admin">
+                <i class="fas fa-shield-alt"></i> Admin
+            </a></li>
+            {% endif %}
+        </ul>
+    </div>
+</nav>
+
+<!-- FLASH MESSAGES -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="flash-container">
+        {% for category, message in messages %}
+        <div class="flash flash-{{ category }}">
+            <i class="fas {% if category == 'success' %}fa-check-circle{% else %}fa-exclamation-circle{% endif %}"></i>
+            {{ message }}
+            <button class="flash-close" onclick="this.parentElement.remove()">×</button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+{% endwith %}
+
+<!-- MAIN CONTENT -->
+<main class="main-content">
+    {% block content %}{% endblock %}
+</main>
+
+<!-- FOOTER -->
+<footer class="footer">
+    <div class="footer-container">
+        <div class="footer-brand">
+            <img src="{{ url_for('static', filename='assets/acsi_logo.png') }}" alt="ACSI Logo" class="footer-logo">
+            <div>
+                <p class="footer-title">ACSI College Iloilo</p>
+                <p class="footer-sub">Excellence in Education</p>
+            </div>
+        </div>
+        <p class="footer-copy">© 2026 ACSI College Iloilo. All rights reserved.</p>
+    </div>
+</footer>
+
+<script>
+    // Mobile nav toggle
+    document.getElementById('navToggle').addEventListener('click', function() {
+        document.getElementById('navLinks').classList.toggle('open');
+    });
+
+    // Auto dismiss flash messages
+    setTimeout(() => {
+        document.querySelectorAll('.flash').forEach(el => el.remove());
+    }, 5000);
+</script>
+
+{% block scripts %}{% endblock %}
+</body>
+</html>

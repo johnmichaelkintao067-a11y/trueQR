@@ -1,0 +1,405 @@
+from flask import Flask, render_template, redirect, url_for, request, flash, jsonify, send_file
+from flask_login import LoginManager, login_user, logout_user, login_required, current_user
+from config import Config
+from models import db, Admin, Semester, Room, Subject, Schedule
+import bcrypt
+import qrcode
+import io
+import os
+from datetime import datetime, time
+
+app = Flask(__name__)
+app.config.from_object(Config)
+
+db.init_app(app)
+
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'admin_login'
+
+@login_manager.user_loader
+def load_user(user_id):
+    return Admin.query.get(int(user_id))
+
+# ─────────────────────────────────────────
+# PUBLIC ROUTES
+# ─────────────────────────────────────────
+
+@app.route('/')
+def index():
+    rooms = Room.query.order_by(Room.name).all()
+    active_semester = Semester.query.filter_by(is_active=True).first()
+    return render_template('index.html', rooms=rooms, active_semester=active_semester)
+
+@app.route('/rooms')
+def public_rooms():
+    rooms = Room.query.order_by(Room.name).all()
+    active_semester = Semester.query.filter_by(is_active=True).first()
+    return render_template('rooms.html', rooms=rooms, active_semester=active_semester)
+
+@app.route('/room/<int:room_id>')
+def public_room(room_id):
+    room = Room.query.get_or_404(room_id)
+    active_semester = Semester.query.filter_by(is_active=True).first()
+    
+    schedules = []
+    if active_semester:
+        schedules = Schedule.query.filter_by(
+            room_id=room_id,
+            semester_id=active_semester.id
+        ).all()
+    
+    # Build color map per subject code
+    color_palette = [
+        '#e74c3c','#3498db','#2ecc71','#f39c12','#9b59b6',
+        '#1abc9c','#e67e22','#e91e63','#00bcd4','#8bc34a',
+        '#ff5722','#607d8b','#673ab7','#009688','#ff9800'
+    ]
+    subject_colors = {}
+    color_index = 0
+    for s in schedules:
+        if s.subject_code not in subject_colors:
+            subject_colors[s.subject_code] = color_palette[color_index % len(color_palette)]
+            color_index += 1
+    
+    # Organize by day
+    days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
+    schedule_by_day = {day: [] for day in days}
+    for s in schedules:
+        schedule_by_day[s.day].append(s)
+    for day in days:
+        schedule_by_day[day].sort(key=lambda x: x.time_start)
+    
+    return render_template('public_room.html',
+        room=room,
+        active_semester=active_semester,
+        schedule_by_day=schedule_by_day,
+        subject_colors=subject_colors,
+        days=days
+    )
+
+# ─────────────────────────────────────────
+# ADMIN AUTH
+# ─────────────────────────────────────────
+
+@app.route('/admin/login', methods=['GET', 'POST'])
+def admin_login():
+    if current_user.is_authenticated:
+        return redirect(url_for('admin_dashboard'))
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+        admin = Admin.query.filter_by(username=username).first()
+        if admin and bcrypt.checkpw(password.encode('utf-8'), admin.password_hash.encode('utf-8')):
+            login_user(admin)
+            return redirect(url_for('admin_dashboard'))
+        flash('Invalid username or password.', 'error')
+    return render_template('admin/login.html')
+
+@app.route('/admin/logout')
+@login_required
+def admin_logout():
+    logout_user()
+    return redirect(url_for('admin_login'))
+
+# ─────────────────────────────────────────
+# ADMIN DASHBOARD
+# ─────────────────────────────────────────
+
+@app.route('/admin/dashboard')
+@login_required
+def admin_dashboard():
+    rooms = Room.query.count()
+    subjects = Subject.query.count()
+    active_semester = Semester.query.filter_by(is_active=True).first()
+    schedules = Schedule.query.count()
+    return render_template('admin/dashboard.html',
+        room_count=rooms,
+        subject_count=subjects,
+        schedule_count=schedules,
+        active_semester=active_semester
+    )
+
+# ─────────────────────────────────────────
+# SEMESTER MANAGEMENT
+# ─────────────────────────────────────────
+
+@app.route('/admin/semesters')
+@login_required
+def admin_semesters():
+    semesters = Semester.query.order_by(Semester.created_at.desc()).all()
+    return render_template('admin/semesters.html', semesters=semesters)
+
+@app.route('/admin/semesters/add', methods=['POST'])
+@login_required
+def admin_semester_add():
+    label = request.form.get('label')
+    if label:
+        sem = Semester(label=label, is_active=False)
+        db.session.add(sem)
+        db.session.commit()
+        flash('Semester added successfully.', 'success')
+    return redirect(url_for('admin_semesters'))
+
+@app.route('/admin/semesters/<int:sem_id>/activate', methods=['POST'])
+@login_required
+def admin_semester_activate(sem_id):
+    Semester.query.update({'is_active': False})
+    sem = Semester.query.get_or_404(sem_id)
+    sem.is_active = True
+    db.session.commit()
+    flash(f'"{sem.label}" is now the active semester.', 'success')
+    return redirect(url_for('admin_semesters'))
+
+@app.route('/admin/semesters/<int:sem_id>/delete', methods=['POST'])
+@login_required
+def admin_semester_delete(sem_id):
+    sem = Semester.query.get_or_404(sem_id)
+    db.session.delete(sem)
+    db.session.commit()
+    flash('Semester deleted.', 'success')
+    return redirect(url_for('admin_semesters'))
+
+# ─────────────────────────────────────────
+# ROOM MANAGEMENT
+# ─────────────────────────────────────────
+
+@app.route('/admin/rooms')
+@login_required
+def admin_rooms():
+    rooms = Room.query.order_by(Room.name).all()
+    return render_template('admin/rooms.html', rooms=rooms)
+
+@app.route('/admin/rooms/add', methods=['GET', 'POST'])
+@login_required
+def admin_room_add():
+    if request.method == 'POST':
+        name = request.form.get('name')
+        rules = request.form.get('rules')
+        if name:
+            room = Room(name=name, rules=rules)
+            db.session.add(room)
+            db.session.commit()
+            flash('Room added successfully.', 'success')
+            return redirect(url_for('admin_rooms'))
+    return render_template('admin/room_form.html', room=None)
+
+@app.route('/admin/rooms/<int:room_id>/edit', methods=['GET', 'POST'])
+@login_required
+def admin_room_edit(room_id):
+    room = Room.query.get_or_404(room_id)
+    if request.method == 'POST':
+        room.name = request.form.get('name')
+        room.rules = request.form.get('rules')
+        db.session.commit()
+        flash('Room updated successfully.', 'success')
+        return redirect(url_for('admin_rooms'))
+    return render_template('admin/room_form.html', room=room)
+
+@app.route('/admin/rooms/<int:room_id>/delete', methods=['POST'])
+@login_required
+def admin_room_delete(room_id):
+    room = Room.query.get_or_404(room_id)
+    db.session.delete(room)
+    db.session.commit()
+    flash('Room deleted.', 'success')
+    return redirect(url_for('admin_rooms'))
+
+# ─────────────────────────────────────────
+# SCHEDULE MANAGEMENT
+# ─────────────────────────────────────────
+
+@app.route('/admin/rooms/<int:room_id>/schedule')
+@login_required
+def admin_schedule(room_id):
+    room = Room.query.get_or_404(room_id)
+    semesters = Semester.query.order_by(Semester.created_at.desc()).all()
+    active_semester = Semester.query.filter_by(is_active=True).first()
+    subjects = Subject.query.order_by(Subject.subject_code).all()
+    
+    sem_id = request.args.get('semester_id', active_semester.id if active_semester else None)
+    schedules = []
+    selected_semester = None
+    if sem_id:
+        selected_semester = Semester.query.get(sem_id)
+        schedules = Schedule.query.filter_by(
+            room_id=room_id,
+            semester_id=sem_id
+        ).order_by(Schedule.day, Schedule.time_start).all()
+    
+    days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
+    return render_template('admin/schedule.html',
+        room=room,
+        semesters=semesters,
+        selected_semester=selected_semester,
+        schedules=schedules,
+        subjects=subjects,
+        days=days
+    )
+
+@app.route('/admin/rooms/<int:room_id>/schedule/add', methods=['POST'])
+@login_required
+def admin_schedule_add(room_id):
+    room = Room.query.get_or_404(room_id)
+    semester_id = request.form.get('semester_id')
+    subject_code = request.form.get('subject_code')
+    subject_description = request.form.get('subject_description')
+    instructor = request.form.get('instructor')
+    day = request.form.get('day')
+    time_start_str = request.form.get('time_start')
+    time_end_str = request.form.get('time_end')
+
+    time_start = datetime.strptime(time_start_str, '%H:%M').time()
+    time_end = datetime.strptime(time_end_str, '%H:%M').time()
+
+    # Overlap check
+    overlaps = Schedule.query.filter_by(
+        room_id=room_id,
+        semester_id=semester_id,
+        day=day
+    ).all()
+
+    for existing in overlaps:
+        if not (time_end <= existing.time_start or time_start >= existing.time_end):
+            flash(f'⚠️ Schedule conflict! Overlaps with {existing.subject_code} ({existing.time_start.strftime("%I:%M %p")} - {existing.time_end.strftime("%I:%M %p")}).', 'error')
+            return redirect(url_for('admin_schedule', room_id=room_id, semester_id=semester_id))
+
+    schedule = Schedule(
+        room_id=room_id,
+        semester_id=semester_id,
+        subject_code=subject_code,
+        subject_description=subject_description,
+        instructor=instructor,
+        day=day,
+        time_start=time_start,
+        time_end=time_end
+    )
+    db.session.add(schedule)
+    db.session.commit()
+    flash('Schedule added successfully.', 'success')
+    return redirect(url_for('admin_schedule', room_id=room_id, semester_id=semester_id))
+
+@app.route('/admin/schedule/<int:sched_id>/delete', methods=['POST'])
+@login_required
+def admin_schedule_delete(sched_id):
+    sched = Schedule.query.get_or_404(sched_id)
+    room_id = sched.room_id
+    semester_id = sched.semester_id
+    db.session.delete(sched)
+    db.session.commit()
+    flash('Schedule entry deleted.', 'success')
+    return redirect(url_for('admin_schedule', room_id=room_id, semester_id=semester_id))
+
+# ─────────────────────────────────────────
+# SUBJECT LIBRARY
+# ─────────────────────────────────────────
+
+@app.route('/admin/subjects')
+@login_required
+def admin_subjects():
+    subjects = Subject.query.order_by(Subject.subject_code).all()
+    return render_template('admin/subjects.html', subjects=subjects)
+
+@app.route('/admin/subjects/add', methods=['POST'])
+@login_required
+def admin_subject_add():
+    code = request.form.get('subject_code')
+    desc = request.form.get('subject_description')
+    if code and desc:
+        subject = Subject(subject_code=code, subject_description=desc)
+        db.session.add(subject)
+        db.session.commit()
+        flash('Subject added to library.', 'success')
+    return redirect(url_for('admin_subjects'))
+
+@app.route('/admin/subjects/<int:sub_id>/delete', methods=['POST'])
+@login_required
+def admin_subject_delete(sub_id):
+    subject = Subject.query.get_or_404(sub_id)
+    db.session.delete(subject)
+    db.session.commit()
+    flash('Subject deleted.', 'success')
+    return redirect(url_for('admin_subjects'))
+
+@app.route('/admin/subjects/api')
+@login_required
+def admin_subjects_api():
+    subjects = Subject.query.order_by(Subject.subject_code).all()
+    return jsonify([{
+        'code': s.subject_code,
+        'description': s.subject_description
+    } for s in subjects])
+
+# ─────────────────────────────────────────
+# QR CODE
+# ─────────────────────────────────────────
+
+@app.route('/admin/rooms/<int:room_id>/qr')
+@login_required
+def admin_qr(room_id):
+    room = Room.query.get_or_404(room_id)
+    return render_template('admin/qr_page.html', room=room)
+
+@app.route('/admin/rooms/<int:room_id>/qr/download')
+@login_required
+def admin_qr_download(room_id):
+    room = Room.query.get_or_404(room_id)
+    url = request.host_url + f'room/{room_id}'
+    
+    qr = qrcode.QRCode(version=1, box_size=10, border=4)
+    qr.add_data(url)
+    qr.make(fit=True)
+    img = qr.make_image(fill_color='black', back_color='white')
+    
+    buf = io.BytesIO()
+    img.save(buf, format='PNG')
+    buf.seek(0)
+    
+    return send_file(buf, mimetype='image/png',
+                     as_attachment=True,
+                     download_name=f'QR_{room.name}.png')
+
+# ─────────────────────────────────────────
+# ADMIN SETTINGS
+# ─────────────────────────────────────────
+
+@app.route('/admin/settings', methods=['GET', 'POST'])
+@login_required
+def admin_settings():
+    if request.method == 'POST':
+        new_username = request.form.get('username')
+        current_password = request.form.get('current_password')
+        new_password = request.form.get('new_password')
+
+        admin = Admin.query.get(current_user.id)
+
+        if not bcrypt.checkpw(current_password.encode('utf-8'), admin.password_hash.encode('utf-8')):
+            flash('Current password is incorrect.', 'error')
+            return redirect(url_for('admin_settings'))
+
+        admin.username = new_username
+        if new_password:
+            admin.password_hash = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+        db.session.commit()
+        flash('Settings updated successfully.', 'success')
+        return redirect(url_for('admin_settings'))
+
+    return render_template('admin/settings.html')
+
+# ─────────────────────────────────────────
+# INIT DB + DEFAULT ADMIN
+# ─────────────────────────────────────────
+
+def init_db():
+    with app.app_context():
+        db.create_all()
+        if not Admin.query.first():
+            hashed = bcrypt.hashpw('admin123'.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+            admin = Admin(username='admin', password_hash=hashed)
+            db.session.add(admin)
+            db.session.commit()
+            print('✅ Default admin created: username=admin, password=admin123')
+
+if __name__ == '__main__':
+    init_db()
+    app.run(debug=True)

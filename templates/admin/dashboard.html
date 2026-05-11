@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — ACSI Admin{% endblock %}
+
+{% block content %}
+<section class="admin-header">
+    <div class="container">
+        <div class="admin-header-content">
+            <div>
+                <h1 class="admin-title"><i class="fas fa-shield-alt"></i> Admin Dashboard</h1>
+                <p class="admin-sub">Welcome back, <strong>{{ current_user.username }}</strong></p>
+            </div>
+            <a href="{{ url_for('admin_logout') }}" class="btn btn-outline-sm">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </a>
+        </div>
+    </div>
+</section>
+
+<section class="section">
+    <div class="container">
+
+        <!-- ACTIVE SEMESTER BANNER -->
+        {% if active_semester %}
+        <div class="semester-banner">
+            <i class="fas fa-calendar-alt"></i>
+            Active Semester: <strong>{{ active_semester.label }}</strong>
+        </div>
+        {% else %}
+        <div class="semester-banner warning">
+            <i class="fas fa-exclamation-triangle"></i>
+            No active semester set. <a href="{{ url_for('admin_semesters') }}">Set one now →</a>
+        </div>
+        {% endif %}
+
+        <!-- STATS -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <i class="fas fa-door-open stat-icon"></i>
+                <h3 class="stat-number">{{ room_count }}</h3>
+                <p class="stat-label">Total Rooms</p>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-book stat-icon"></i>
+                <h3 class="stat-number">{{ subject_count }}</h3>
+                <p class="stat-label">Subjects in Library</p>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-calendar-check stat-icon"></i>
+                <h3 class="stat-number">{{ schedule_count }}</h3>
+                <p class="stat-label">Total Schedules</p>
+            </div>
+        </div>
+
+        <!-- QUICK ACTIONS -->
+        <h2 class="section-title" style="margin-top:2rem">Quick Actions</h2>
+        <div class="actions-grid">
+            <a href="{{ url_for('admin_semesters') }}" class="action-card">
+                <i class="fas fa-calendar-alt action-icon"></i>
+                <h3 class="action-title">Manage Semesters</h3>
+                <p class="action-sub">Add, activate or delete semesters</p>
+            </a>
+            <a href="{{ url_for('admin_rooms') }}" class="action-card">
+                <i class="fas fa-door-open action-icon"></i>
+                <h3 class="action-title">Manage Rooms</h3>
+                <p class="action-sub">Add rooms and manage schedules</p>
+            </a>
+            <a href="{{ url_for('admin_subjects') }}" class="action-card">
+                <i class="fas fa-book action-icon"></i>
+                <h3 class="action-title">Subject Library</h3>
+                <p class="action-sub">Manage reusable subject list</p>
+            </a>
+            <a href="{{ url_for('admin_settings') }}" class="action-card">
+                <i class="fas fa-cog action-icon"></i>
+                <h3 class="action-title">Settings</h3>
+                <p class="action-sub">Change username and password</p>
+            </a>
+        </div>
+
+    </div>
+</section>
+{% endblock %}

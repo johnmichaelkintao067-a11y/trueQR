@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}QR Code — {{ room.name }} — ACSI Admin{% endblock %}
+
+{% block content %}
+<section class="admin-header">
+    <div class="container">
+        <div class="admin-header-content">
+            <div>
+                <h1 class="admin-title"><i class="fas fa-qrcode"></i> QR Code — {{ room.name }}</h1>
+                <p class="admin-sub">Generate and download the QR code for this room</p>
+            </div>
+            <a href="{{ url_for('admin_rooms') }}" class="btn btn-outline-sm">
+                <i class="fas fa-arrow-left"></i> Back to Rooms
+            </a>
+        </div>
+    </div>
+</section>
+
+<section class="section">
+    <div class="container">
+        <div class="admin-card" style="max-width: 500px; margin: 0 auto; text-align: center;">
+
+            <div class="qr-room-name">{{ room.name }}</div>
+            <p class="qr-info">This QR code links directly to the public schedule page for this room.</p>
+
+            <!-- QR PREVIEW -->
+            <div class="qr-preview">
+                <img src="{{ url_for('admin_qr_download', room_id=room.id) }}"
+                     alt="QR Code for {{ room.name }}"
+                     class="qr-image" id="qrImage">
+            </div>
+
+            <p class="qr-url">
+                <i class="fas fa-link"></i>
+                <span id="qrUrl"></span>
+            </p>
+
+            <div class="qr-actions">
+                <a href="{{ url_for('admin_qr_download', room_id=room.id) }}"
+                   download="QR_{{ room.name }}.png"
+                   class="btn btn-primary">
+                    <i class="fas fa-download"></i> Download QR Code
+                </a>
+                <a href="{{ url_for('public_room', room_id=room.id) }}"
+                   target="_blank" class="btn btn-outline-sm">
+                    <i class="fas fa-eye"></i> Preview Room Page
+                </a>
+            </div>
+
+            <div class="qr-note">
+                <i class="fas fa-info-circle"></i>
+                <p>This QR code is permanently tied to <strong>{{ room.name }}</strong>.
+                You do not need to reprint it when updating the schedule —
+                only if you delete and recreate the room.</p>
+            </div>
+
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Show the URL this QR points to
+    document.getElementById('qrUrl').textContent =
+        window.location.origin + '/room/{{ room.id }}';
+</script>
+{% endblock %}

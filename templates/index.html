@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}Home — ACSI College Iloilo{% endblock %}
+
+{% block content %}
+<!-- HERO -->
+<section class="hero">
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+        <img src="{{ url_for('static', filename='assets/acsi_logo.png') }}" alt="ACSI Logo" class="hero-logo">
+        <h1 class="hero-title">ACSI College Iloilo</h1>
+        <p class="hero-subtitle">Excellence in Education</p>
+        {% if active_semester %}
+        <div class="hero-semester">
+            <i class="fas fa-calendar-alt"></i>
+            {{ active_semester.label }}
+        </div>
+        {% endif %}
+        <div class="hero-buttons">
+            <a href="{{ url_for('public_rooms') }}" class="btn btn-primary">
+                <i class="fas fa-door-open"></i> View Room Schedules
+            </a>
+            <a href="{{ url_for('admin_login') }}" class="btn btn-outline">
+                <i class="fas fa-shield-alt"></i> Admin Portal
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- QUICK STATS -->
+<section class="stats-section">
+    <div class="container">
+        <div class="stats-grid">
+            <div class="stat-card">
+                <i class="fas fa-door-open stat-icon"></i>
+                <h3 class="stat-number">{{ rooms|length }}</h3>
+                <p class="stat-label">Active Rooms</p>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-qrcode stat-icon"></i>
+                <h3 class="stat-number">{{ rooms|length }}</h3>
+                <p class="stat-label">QR Codes Generated</p>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-calendar-check stat-icon"></i>
+                <h3 class="stat-number">
+                    {% if active_semester %}1{% else %}0{% endif %}
+                </h3>
+                <p class="stat-label">Active Semester</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ROOMS PREVIEW -->
+<section class="rooms-preview-section">
+    <div class="container">
+        <div class="section-header">
+            <h2 class="section-title">Room Schedules</h2>
+            <p class="section-sub">Scan the QR code on any room door or browse below</p>
+        </div>
+        {% if rooms %}
+        <div class="rooms-grid">
+            {% for room in rooms %}
+            <a href="{{ url_for('public_room', room_id=room.id) }}" class="room-card">
+                <div class="room-card-icon">
+                    <i class="fas fa-door-open"></i>
+                </div>
+                <div class="room-card-info">
+                    <h3 class="room-card-name">{{ room.name }}</h3>
+                    <p class="room-card-sub">View Schedule →</p>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+        <div class="section-footer">
+            <a href="{{ url_for('public_rooms') }}" class="btn btn-outline">
+                View All Rooms <i class="fas fa-arrow-right"></i>
+            </a>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-door-closed"></i>
+            <p>No rooms available yet.</p>
+        </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

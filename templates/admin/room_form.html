@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Edit' if room else 'Add' }} Room — ACSI Admin{% endblock %}
+
+{% block content %}
+<section class="admin-header">
+    <div class="container">
+        <div class="admin-header-content">
+            <div>
+                <h1 class="admin-title">
+                    <i class="fas fa-door-open"></i>
+                    {{ 'Edit Room' if room else 'Add New Room' }}
+                </h1>
+                <p class="admin-sub">{{ 'Update room details and rules' if room else 'Create a new room' }}</p>
+            </div>
+            <a href="{{ url_for('admin_rooms') }}" class="btn btn-outline-sm">
+                <i class="fas fa-arrow-left"></i> Back to Rooms
+            </a>
+        </div>
+    </div>
+</section>
+
+<section class="section">
+    <div class="container">
+        <div class="admin-card" style="max-width: 600px; margin: 0 auto;">
+            <form method="POST" action="{{ url_for('admin_room_edit', room_id=room.id) if room else url_for('admin_room_add') }}">
+                
+                <div class="form-group">
+                    <label class="form-label">ROOM NAME <span class="required">*</span></label>
+                    <input type="text" name="name" class="form-input"
+                        placeholder="e.g. Labrador, Room 101"
+                        value="{{ room.name if room else '' }}" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">ROOM RULES <span class="optional">(optional)</span></label>
+                    <textarea name="rules" class="form-textarea" rows="6"
+                        placeholder="Enter room rules, guidelines, or notes...">{{ room.rules if room else '' }}</textarea>
+                    <p class="form-hint">These rules will be displayed at the bottom of the public room schedule page.</p>
+                </div>
+
+                <div class="form-buttons">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i>
+                        {{ 'Update Room' if room else 'Add Room' }}
+                    </button>
+                    <a href="{{ url_for('admin_rooms') }}" class="btn btn-outline-sm">
+                        Cancel
+                    </a>
+                </div>
+
+            </form>
+        </div>
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}Semesters — ACSI Admin{% endblock %}
+
+{% block content %}
+<section class="admin-header">
+    <div class="container">
+        <div class="admin-header-content">
+            <div>
+                <h1 class="admin-title"><i class="fas fa-calendar-alt"></i> Semesters</h1>
+                <p class="admin-sub">Manage academic semesters</p>
+            </div>
+            <a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline-sm">
+                <i class="fas fa-arrow-left"></i> Dashboard
+            </a>
+        </div>
+    </div>
+</section>
+
+<section class="section">
+    <div class="container">
+
+        <!-- ADD SEMESTER FORM -->
+        <div class="admin-card">
+            <h2 class="card-title"><i class="fas fa-plus-circle"></i> Add New Semester</h2>
+            <form method="POST" action="{{ url_for('admin_semester_add') }}" class="inline-form">
+                <input type="text" name="label" class="form-input"
+                    placeholder="e.g. Second Semester S.Y. 2025-2026" required>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Add Semester
+                </button>
+            </form>
+        </div>
+
+        <!-- SEMESTER LIST -->
+        <div class="admin-card">
+            <h2 class="card-title"><i class="fas fa-list"></i> All Semesters</h2>
+            {% if semesters %}
+            <div class="table-wrap">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Semester</th>
+                            <th>Status</th>
+                            <th>Created</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for sem in semesters %}
+                        <tr>
+                            <td><strong>{{ sem.label }}</strong></td>
+                            <td>
+                                {% if sem.is_active %}
+                                <span class="badge badge-success">Active</span>
+                                {% else %}
+                                <span class="badge badge-gray">Inactive</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ sem.created_at.strftime('%b %d, %Y') }}</td>
+                            <td class="table-actions">
+                                {% if not sem.is_active %}
+                                <form method="POST" action="{{ url_for('admin_semester_activate', sem_id=sem.id) }}" style="display:inline">
+                                    <button type="submit" class="btn-sm btn-success">
+                                        <i class="fas fa-check"></i> Set Active
+                                    </button>
+                                </form>
+                                <form method="POST" action="{{ url_for('admin_semester_delete', sem_id=sem.id) }}"
+                                    style="display:inline"
+                                    onsubmit="return confirm('Delete this semester? All its schedules will be deleted too.')">
+                                    <button type="submit" class="btn-sm btn-danger">
+                                        <i class="fas fa-trash"></i> Delete
+                                    </button>
+                                </form>
+                                {% else %}
+                                <span class="text-muted">Currently Active</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <i class="fas fa-calendar-times"></i>
+                <p>No semesters added yet.</p>
+            </div>
+            {% endif %}
+        </div>
+
+    </div>
+</section>
+{% endblock %}

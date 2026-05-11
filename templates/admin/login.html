@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Admin Login — ACSI College Iloilo{% endblock %}
+
+{% block content %}
+<section class="auth-section">
+    <div class="auth-card">
+        <div class="auth-header">
+            <img src="{{ url_for('static', filename='assets/acsi_logo.png') }}" alt="ACSI Logo" class="auth-logo">
+            <h1 class="auth-title">ACSI College Iloilo</h1>
+            <p class="auth-sub">Excellence in Education</p>
+            <hr class="auth-divider">
+            <h2 class="auth-form-title">Admin Portal</h2>
+            <p class="auth-form-sub">Sign in with your admin credentials to continue.</p>
+        </div>
+
+        <form method="POST" action="{{ url_for('admin_login') }}">
+            <div class="form-group">
+                <label class="form-label">USERNAME</label>
+                <input type="text" name="username" class="form-input" placeholder="Enter your username" required autofocus>
+            </div>
+            <div class="form-group">
+                <label class="form-label">PASSWORD</label>
+                <input type="password" name="password" class="form-input" placeholder="Enter your password" required>
+            </div>
+            <button type="submit" class="btn btn-primary btn-full">
+                SIGN IN <i class="fas fa-arrow-right"></i>
+            </button>
+            <p class="auth-footer">Access restricted to registered admins only.</p>
+        </form>
+    </div>
+</section>
+{% endblock %}

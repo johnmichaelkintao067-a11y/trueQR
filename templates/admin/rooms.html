@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}Rooms — ACSI Admin{% endblock %}
+
+{% block content %}
+<section class="admin-header">
+    <div class="container">
+        <div class="admin-header-content">
+            <div>
+                <h1 class="admin-title"><i class="fas fa-door-open"></i> Rooms</h1>
+                <p class="admin-sub">Manage classroom and room schedules</p>
+            </div>
+            <div class="header-actions">
+                <a href="{{ url_for('admin_room_add') }}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Add Room
+                </a>
+                <a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline-sm">
+                    <i class="fas fa-arrow-left"></i> Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="section">
+    <div class="container">
+        {% if rooms %}
+        <div class="admin-rooms-grid">
+            {% for room in rooms %}
+            <div class="admin-room-card">
+                <div class="admin-room-icon">
+                    <i class="fas fa-door-open"></i>
+                </div>
+                <div class="admin-room-info">
+                    <h3 class="admin-room-name">{{ room.name }}</h3>
+                    <p class="admin-room-sub">Added {{ room.created_at.strftime('%b %d, %Y') }}</p>
+                </div>
+                <div class="admin-room-actions">
+                    <a href="{{ url_for('admin_schedule', room_id=room.id) }}" class="btn-sm btn-primary">
+                        <i class="fas fa-calendar"></i> Schedule
+                    </a>
+                    <a href="{{ url_for('admin_qr', room_id=room.id) }}" class="btn-sm btn-success">
+                        <i class="fas fa-qrcode"></i> QR
+                    </a>
+                    <a href="{{ url_for('admin_room_edit', room_id=room.id) }}" class="btn-sm btn-warning">
+                        <i class="fas fa-edit"></i> Edit
+                    </a>
+                    <form method="POST" action="{{ url_for('admin_room_delete', room_id=room.id) }}"
+                        style="display:inline"
+                        onsubmit="return confirm('Delete {{ room.name }}? This will also delete all its schedules.')">
+                        <button type="submit" class="btn-sm btn-danger">
+                            <i class="fas fa-trash"></i> Delete
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-door-closed"></i>
+            <p>No rooms added yet.</p>
+            <a href="{{ url_for('admin_room_add') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Add First Room
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}
