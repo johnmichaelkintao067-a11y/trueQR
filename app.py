@@ -309,6 +309,64 @@ def admin_schedule_add(room_id):
     flash('Schedule added successfully.', 'success')
     return redirect(url_for('admin_schedule', room_id=room_id, semester_id=semester_id))
 
+@app.route('/admin/schedule/<int:sched_id>/edit', methods=['GET', 'POST'])
+@login_required
+def admin_schedule_edit(sched_id):
+    sched = Schedule.query.get_or_404(sched_id)
+    room = Room.query.get(sched.room_id)
+    instructors = Instructor.query.order_by(Instructor.name).all()
+    subjects = Subject.query.order_by(Subject.subject_code).all()
+    days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
+
+    if request.method == 'POST':
+        subject_code = request.form.get('subject_code')
+        subject_description = request.form.get('subject_description')
+        instructor_id = request.form.get('instructor_id')
+        instructor_name = request.form.get('instructor_name')
+        day = request.form.get('day')
+        time_start_str = request.form.get('time_start')
+        time_end_str = request.form.get('time_end')
+
+        time_start = datetime.strptime(time_start_str, '%H:%M').time()
+        time_end = datetime.strptime(time_end_str, '%H:%M').time()
+
+        if instructor_id:
+            instr = db.session.get(Instructor, int(instructor_id))
+            instructor_display = instr.name if instr else instructor_name
+        else:
+            instructor_display = instructor_name
+
+        # Overlap check excluding current schedule
+        overlaps = Schedule.query.filter_by(
+            room_id=sched.room_id,
+            semester_id=sched.semester_id,
+            day=day
+        ).filter(Schedule.id != sched_id).all()
+
+        for existing in overlaps:
+            if not (time_end <= existing.time_start or time_start >= existing.time_end):
+                flash(f'⚠️ Schedule conflict! Overlaps with {existing.subject_code} ({existing.time_start.strftime("%I:%M %p")} - {existing.time_end.strftime("%I:%M %p")}).', 'error')
+                return redirect(url_for('admin_schedule_edit', sched_id=sched_id))
+
+        sched.subject_code = subject_code
+        sched.subject_description = subject_description
+        sched.instructor = instructor_display
+        sched.instructor_id = int(instructor_id) if instructor_id else None
+        sched.day = day
+        sched.time_start = time_start
+        sched.time_end = time_end
+        db.session.commit()
+        flash('Schedule updated successfully.', 'success')
+        return redirect(url_for('admin_schedule', room_id=sched.room_id, semester_id=sched.semester_id))
+
+    return render_template('admin/schedule_edit.html',
+        sched=sched,
+        room=room,
+        instructors=instructors,
+        subjects=subjects,
+        days=days
+    )
+
 @app.route('/admin/schedule/<int:sched_id>/delete', methods=['POST'])
 @login_required
 def admin_schedule_delete(sched_id):

@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{% block title %}Edit Schedule — ACSI Admin{% endblock %}
+
+{% block content %}
+<section class="admin-header">
+    <div class="container">
+        <div class="admin-header-content">
+            <div>
+                <h1 class="admin-title"><i class="fas fa-edit"></i> Edit Schedule</h1>
+                <p class="admin-sub">{{ room.name }} — Update schedule entry</p>
+            </div>
+            <a href="{{ url_for('admin_schedule', room_id=room.id, semester_id=sched.semester_id) }}" class="btn btn-outline-sm">
+                <i class="fas fa-arrow-left"></i> Back to Schedule
+            </a>
+        </div>
+    </div>
+</section>
+
+<section class="section">
+    <div class="container">
+        <div class="admin-card" style="max-width: 700px; margin: 0 auto;">
+            <form method="POST" action="{{ url_for('admin_schedule_edit', sched_id=sched.id) }}">
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">DAY <span class="required">*</span></label>
+                        <select name="day" class="form-input" required>
+                            {% for day in days %}
+                            <option value="{{ day }}" {% if sched.day == day %}selected{% endif %}>{{ day }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">TIME START <span class="required">*</span></label>
+                        <input type="time" name="time_start" class="form-input" required
+                            value="{{ sched.time_start.strftime('%H:%M') }}">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">TIME END <span class="required">*</span></label>
+                        <input type="time" name="time_end" class="form-input" required
+                            value="{{ sched.time_end.strftime('%H:%M') }}">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">SUBJECT CODE <span class="required">*</span></label>
+                        <input type="text" name="subject_code" id="subjectCode" class="form-input"
+                            value="{{ sched.subject_code }}" required autocomplete="off">
+                        <div id="subjectSuggestions" class="suggestions-box"></div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">SUBJECT DESCRIPTION <span class="required">*</span></label>
+                        <input type="text" name="subject_description" id="subjectDesc" class="form-input"
+                            value="{{ sched.subject_description }}" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">INSTRUCTOR <span class="required">*</span></label>
+                        <select name="instructor_id" id="instructorSelect" class="form-input">
+                            <option value="">-- Select from Library --</option>
+                            {% for instr in instructors %}
+                            <option value="{{ instr.id }}"
+                                {% if sched.instructor_id == instr.id %}selected{% endif %}>
+                                {{ instr.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">OR TYPE NAME <span class="optional">(if not in library)</span></label>
+                        <input type="text" name="instructor_name" id="instructorName" class="form-input"
+                            value="{% if not sched.instructor_id %}{{ sched.instructor }}{% endif %}"
+                            placeholder="e.g. Juan Dela Cruz"
+                            {% if sched.instructor_id %}disabled{% endif %}>
+                    </div>
+                </div>
+
+                <div class="form-buttons">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Save Changes
+                    </button>
+                    <a href="{{ url_for('admin_schedule', room_id=room.id, semester_id=sched.semester_id) }}"
+                        class="btn btn-outline-sm">Cancel</a>
+                </div>
+
+            </form>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const subjects = [];
+fetch('/admin/subjects/api')
+    .then(res => res.json())
+    .then(data => subjects.push(...data));
+
+const codeInput = document.getElementById('subjectCode');
+const descInput = document.getElementById('subjectDesc');
+const suggestBox = document.getElementById('subjectSuggestions');
+
+codeInput.addEventListener('input', function() {
+    const val = this.value.toLowerCase();
+    suggestBox.innerHTML = '';
+    if (!val) return;
+    const matches = subjects.filter(s =>
+        s.code.toLowerCase().includes(val) ||
+        s.description.toLowerCase().includes(val)
+    );
+    matches.slice(0, 6).forEach(s => {
+        const div = document.createElement('div');
+        div.className = 'suggestion-item';
+        div.innerHTML = `<strong>${s.code}</strong> — ${s.description}`;
+        div.addEventListener('click', () => {
+            codeInput.value = s.code;
+            descInput.value = s.description;
+            suggestBox.innerHTML = '';
+        });
+        suggestBox.appendChild(div);
+    });
+});
+
+document.addEventListener('click', function(e) {
+    if (!codeInput.contains(e.target)) suggestBox.innerHTML = '';
+});
+
+document.getElementById('instructorSelect').addEventListener('change', function() {
+    if (this.value) {
+        document.getElementById('instructorName').value = '';
+        document.getElementById('instructorName').disabled = true;
+    } else {
+        document.getElementById('instructorName').disabled = false;
+    }
+});
+</script>
+{% endblock %}
