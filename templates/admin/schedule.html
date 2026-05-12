@@ -140,14 +140,18 @@
                                 {% endif %}
                             </td>
                             <td>
-                                <form method="POST" action="{{ url_for('admin_schedule_delete', sched_id=sched.id) }}"
-                                    style="display:inline"
-                                    onsubmit="return confirm('Delete this schedule entry?')">
-                                    <button type="submit" class="btn-sm btn-danger">
-                                        <i class="fas fa-trash"></i> Delete
-                                    </button>
-                                </form>
-                            </td>
+    <a href="{{ url_for('admin_schedule_edit', sched_id=sched.id) }}"
+        class="btn-sm btn-warning">
+        <i class="fas fa-edit"></i> Edit
+    </a>
+    <form method="POST" action="{{ url_for('admin_schedule_delete', sched_id=sched.id) }}"
+        style="display:inline"
+        onsubmit="return confirm('Delete this schedule entry?')">
+        <button type="submit" class="btn-sm btn-danger">
+            <i class="fas fa-trash"></i> Delete
+        </button>
+    </form>
+</td>
                         </tr>
                         {% endfor %}
                     </tbody>
