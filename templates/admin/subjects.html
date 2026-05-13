@@ -7,7 +7,7 @@
         <div class="admin-header-content">
             <div>
                 <h1 class="admin-title"><i class="fas fa-book"></i> Subject Library</h1>
-                <p class="admin-sub">Manage reusable subjects for schedule entry</p>
+                <p class="admin-sub">Manage reusable subjects and their colors</p>
             </div>
             <a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline-sm">
                 <i class="fas fa-arrow-left"></i> Dashboard
@@ -53,6 +53,7 @@
                     <thead>
                         <tr>
                             <th>#</th>
+                            <th>Color</th>
                             <th>Subject Code</th>
                             <th>Description</th>
                             <th>Action</th>
@@ -62,6 +63,20 @@
                         {% for subject in subjects %}
                         <tr>
                             <td>{{ loop.index }}</td>
+                            <td>
+                                <form method="POST" action="{{ url_for('admin_subject_edit', sub_id=subject.id) }}"
+                                    style="display:flex; align-items:center; gap:0.5rem;">
+                                    <input type="color"
+                                        name="color"
+                                        value="{{ subject.color or '#3498db' }}"
+                                        class="color-picker"
+                                        onchange="this.form.submit()"
+                                        title="Click to change color">
+                                    <span class="color-badge" style="background: {{ subject.color or '#3498db' }}">
+                                        {{ subject.color or '#3498db' }}
+                                    </span>
+                                </form>
+                            </td>
                             <td><strong>{{ subject.subject_code }}</strong></td>
                             <td>{{ subject.subject_description }}</td>
                             <td>
@@ -82,7 +97,6 @@
             <div class="empty-state">
                 <i class="fas fa-book-open"></i>
                 <p>No subjects in library yet.</p>
-                <p class="text-muted">Add subjects above to use as autocomplete suggestions when creating schedules.</p>
             </div>
             {% endif %}
         </div>

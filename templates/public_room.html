@@ -34,17 +34,20 @@
 
 <!-- TAB NAVIGATION -->
 <div class="tab-nav">
-    <button class="tab-btn active" onclick="switchTab('schedule')">
+    <button class="tab-btn active" onclick="switchTab('schedule', this)">
         <i class="fas fa-calendar"></i> Schedule
     </button>
-    <button class="tab-btn" onclick="switchTab('rules')">
+    <button class="tab-btn" onclick="switchTab('rules', this)">
         <i class="fas fa-clipboard-list"></i> Rules
     </button>
-    <button class="tab-btn" onclick="switchTab('subjects')">
+    <button class="tab-btn" onclick="switchTab('subjects', this)">
         <i class="fas fa-book"></i> Subjects
     </button>
-    <button class="tab-btn" onclick="switchTab('instructors')">
+    <button class="tab-btn" onclick="switchTab('instructors', this)">
         <i class="fas fa-chalkboard-teacher"></i> Instructors
+    </button>
+    <button class="tab-btn" onclick="switchTab('vacant', this)">
+        <i class="fas fa-door-open"></i> Vacant
     </button>
 </div>
 
@@ -239,6 +242,67 @@
     {% endif %}
 </div>
 
+<!-- ─── TAB: VACANT ─── -->
+<div class="tab-content hidden" id="tab-vacant">
+    <div class="vacant-container">
+        <!-- DAY FILTER (mobile) -->
+        <div class="day-filter mobile-only" style="display:flex;">
+            <button class="day-btn active" onclick="filterVacantDay('all', this)">All</button>
+            {% for day in days %}
+            <button class="day-btn" onclick="filterVacantDay('{{ day }}', this)">{{ day[:3] }}</button>
+            {% endfor %}
+        </div>
+
+        {% set has_vacant = namespace(found=false) %}
+        {% for day in days %}
+            {% if vacant_by_day[day] %}
+                {% set has_vacant.found = true %}
+            {% endif %}
+        {% endfor %}
+
+        {% if has_vacant.found %}
+        {% for day in days %}
+        {% if vacant_by_day[day] %}
+        <div class="vacant-day" data-day="{{ day }}">
+            <div class="vacant-day-header">
+                <i class="fas fa-calendar-day"></i> {{ day }}
+                <span class="vacant-count">{{ vacant_by_day[day]|length }} slot(s) available</span>
+            </div>
+            <div class="vacant-slots">
+                {% for slot_start, slot_end in vacant_by_day[day] %}
+                {% set sh = slot_start.split(':')[0]|int %}
+                {% set sm = slot_start.split(':')[1]|int %}
+                {% set eh = slot_end.split(':')[0]|int %}
+                {% set em = slot_end.split(':')[1]|int %}
+                {% set s_hour = sh if sh <= 12 else sh - 12 %}
+                {% set s_hour = 12 if s_hour == 0 else s_hour %}
+                {% set s_ampm = 'AM' if sh < 12 else 'PM' %}
+                {% set e_hour = eh if eh <= 12 else eh - 12 %}
+                {% set e_hour = 12 if e_hour == 0 else e_hour %}
+                {% set e_ampm = 'AM' if eh < 12 else 'PM' %}
+                <div class="vacant-slot">
+                    <i class="fas fa-clock"></i>
+                    {{ s_hour }}:{{ '%02d'|format(sm) }} {{ s_ampm }} — {{ e_hour }}:{{ '%02d'|format(em) }} {{ e_ampm }}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+        {% endfor %}
+        {% else %}
+        <div class="empty-tab">
+            <i class="fas fa-calendar-check"></i>
+            <p>No vacant time slots available.</p>
+        </div>
+        {% endif %}
+
+        <div class="scan-hint">
+            <i class="fas fa-qrcode"></i>
+            To view another room's schedule, scan its QR code.
+        </div>
+    </div>
+</div>
+
 <!-- FOOTER -->
 <div class="room-footer">
     <p>© 2026 ACSI College Iloilo — Room Schedule System</p>
@@ -246,25 +310,26 @@
 
 <script>
 // Tab switching
-function switchTab(tab) {
+function switchTab(tab, btn) {
     document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
     document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
     document.getElementById('tab-' + tab).classList.remove('hidden');
-    event.target.closest('.tab-btn').classList.add('active');
+    btn.classList.add('active');
 }
 
-// Day filter (mobile only)
-function filterDay(day) {
-    document.querySelectorAll('.day-btn').forEach(btn => btn.classList.remove('active'));
-    event.target.classList.add('active');
+function filterDay(day, btn) {
+    document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.mobile-day').forEach(el => {
+        el.style.display = (day === 'all' || el.dataset.day === day) ? 'block' : 'none';
+    });
+}
 
-    const mobileDays = document.querySelectorAll('.mobile-day');
-    mobileDays.forEach(el => {
-        if (day === 'all' || el.dataset.day === day) {
-            el.style.display = 'block';
-        } else {
-            el.style.display = 'none';
-        }
+function filterVacantDay(day, btn) {
+    document.querySelectorAll('.day-filter .day-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.vacant-day').forEach(el => {
+        el.style.display = (day === 'all' || el.dataset.day === day) ? 'block' : 'none';
     });
 }
 </script>

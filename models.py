@@ -26,12 +26,14 @@ class Room(db.Model):
     rules = db.Column(db.Text, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     schedules = db.relationship('Schedule', backref='room', lazy=True)
+    reservations = db.relationship('RoomReservation', backref='room', lazy=True)
 
 class Subject(db.Model):
     __tablename__ = 'subjects'
     id = db.Column(db.Integer, primary_key=True)
     subject_code = db.Column(db.String(50), nullable=False)
     subject_description = db.Column(db.String(255), nullable=False)
+    color = db.Column(db.String(7), default='#3498db')
 
 class Instructor(db.Model):
     __tablename__ = 'instructors'
@@ -51,6 +53,16 @@ class Schedule(db.Model):
     subject_description = db.Column(db.String(255), nullable=False)
     instructor = db.Column(db.String(100), nullable=False)
     instructor_id = db.Column(db.Integer, db.ForeignKey('instructors.id'), nullable=True)
+    day = db.Column(db.Enum('Monday','Tuesday','Wednesday','Thursday','Friday'), nullable=False)
+    time_start = db.Column(db.Time, nullable=False)
+    time_end = db.Column(db.Time, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class RoomReservation(db.Model):
+    __tablename__ = 'room_reservations'
+    id = db.Column(db.Integer, primary_key=True)
+    room_id = db.Column(db.Integer, db.ForeignKey('rooms.id'), nullable=False)
+    semester_id = db.Column(db.Integer, db.ForeignKey('semesters.id'), nullable=False)
     day = db.Column(db.Enum('Monday','Tuesday','Wednesday','Thursday','Friday'), nullable=False)
     time_start = db.Column(db.Time, nullable=False)
     time_end = db.Column(db.Time, nullable=False)

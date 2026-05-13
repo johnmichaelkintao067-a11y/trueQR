@@ -35,23 +35,26 @@
                     <p class="admin-room-sub">Added {{ room.created_at.strftime('%b %d, %Y') }}</p>
                 </div>
                 <div class="admin-room-actions">
-                    <a href="{{ url_for('admin_schedule', room_id=room.id) }}" class="btn-sm btn-primary">
-                        <i class="fas fa-calendar"></i> Schedule
-                    </a>
-                    <a href="{{ url_for('admin_qr', room_id=room.id) }}" class="btn-sm btn-success">
-                        <i class="fas fa-qrcode"></i> QR
-                    </a>
-                    <a href="{{ url_for('admin_room_edit', room_id=room.id) }}" class="btn-sm btn-warning">
-                        <i class="fas fa-edit"></i> Edit
-                    </a>
-                    <form method="POST" action="{{ url_for('admin_room_delete', room_id=room.id) }}"
-                        style="display:inline"
-                        onsubmit="return confirm('Delete {{ room.name }}? This will also delete all its schedules.')">
-                        <button type="submit" class="btn-sm btn-danger">
-                            <i class="fas fa-trash"></i> Delete
-                        </button>
-                    </form>
-                </div>
+    <a href="{{ url_for('admin_schedule', room_id=room.id) }}" class="btn-sm btn-primary">
+        <i class="fas fa-calendar"></i> Schedule
+    </a>
+    <a href="{{ url_for('admin_reservations', room_id=room.id) }}" class="btn-sm btn-info">
+        <i class="fas fa-clock"></i> Reserved
+    </a>
+    <a href="{{ url_for('admin_qr', room_id=room.id) }}" class="btn-sm btn-success">
+        <i class="fas fa-qrcode"></i> QR
+    </a>
+    <a href="{{ url_for('admin_room_edit', room_id=room.id) }}" class="btn-sm btn-warning">
+        <i class="fas fa-edit"></i> Edit
+    </a>
+    <form method="POST" action="{{ url_for('admin_room_delete', room_id=room.id) }}"
+        style="display:inline"
+        onsubmit="return confirm('Delete {{ room.name }}? This will also delete all its schedules.')">
+        <button type="submit" class="btn-sm btn-danger">
+            <i class="fas fa-trash"></i> Delete
+        </button>
+    </form>
+</div>
             </div>
             {% endfor %}
         </div>

@@ -1,7 +1,7 @@
 from flask import Flask, render_template, redirect, url_for, request, flash, jsonify, send_file
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from config import Config
-from models import db, Admin, Semester, Room, Subject, Schedule, Instructor
+from models import db, Admin, Semester, Room, Subject, Schedule, Instructor, RoomReservation
 import bcrypt
 import qrcode
 import io
@@ -49,13 +49,18 @@ def public_room(room_id):
             semester_id=active_semester.id
         ).all()
 
-    # Build color map per subject code
+    # Build GLOBAL color map from subjects table
+    subject_colors = {}
+    all_subjects = Subject.query.all()
+    for subj in all_subjects:
+        subject_colors[subj.subject_code] = subj.color or '#3498db'
+
+    # For subjects not in library, assign fallback colors
     color_palette = [
         '#e74c3c','#3498db','#2ecc71','#f39c12','#9b59b6',
         '#1abc9c','#e67e22','#e91e63','#00bcd4','#8bc34a',
         '#ff5722','#607d8b','#673ab7','#009688','#ff9800'
     ]
-    subject_colors = {}
     color_index = 0
     for s in schedules:
         if s.subject_code not in subject_colors:
@@ -70,7 +75,7 @@ def public_room(room_id):
     for day in days:
         schedule_by_day[day].sort(key=lambda x: x.time_start)
 
-    # Build unique subjects and instructors for this room
+    # Build unique subjects and instructors
     seen_subjects = {}
     seen_instructors = {}
     for s in schedules:
@@ -85,6 +90,63 @@ def public_room(room_id):
                 'name': s.instructor, 'email': None, 'contact': None
             })()
 
+    # Build vacant slots
+    time_slots = [
+        ('09:00', '09:30'), ('09:30', '10:00'),
+        ('10:00', '10:30'), ('10:30', '11:00'),
+        ('11:00', '11:30'), ('11:30', '12:00'),
+        ('12:00', '12:30'), ('12:30', '13:00'),
+        ('13:00', '13:30'), ('13:30', '14:00'),
+        ('14:00', '14:30'), ('14:30', '15:00'),
+        ('15:00', '15:30'), ('15:30', '16:00'),
+        ('16:00', '16:30'), ('16:30', '17:00'),
+        ('17:00', '17:30'), ('17:30', '18:00'),
+    ]
+
+    # Get reservations
+    reservations = []
+    if active_semester:
+        reservations = RoomReservation.query.filter_by(
+            room_id=room_id,
+            semester_id=active_semester.id
+        ).all()
+
+    vacant_by_day = {day: [] for day in days}
+    for day in days:
+        day_schedules = schedule_by_day[day]
+        day_reservations = [r for r in reservations if r.day == day]
+
+        # Merge scheduled and reserved slots
+        busy_slots = []
+        for s in day_schedules:
+            busy_slots.append((s.time_start, s.time_end))
+        for r in day_reservations:
+            busy_slots.append((r.time_start, r.time_end))
+
+        # Find vacant slots
+        vacant_merged = []
+        for slot_start, slot_end in time_slots:
+            from datetime import datetime as dt
+            ts = dt.strptime(slot_start, '%H:%M').time()
+            te = dt.strptime(slot_end, '%H:%M').time()
+            is_busy = False
+            for busy_start, busy_end in busy_slots:
+                if not (te <= busy_start or ts >= busy_end):
+                    is_busy = True
+                    break
+            if not is_busy:
+                vacant_merged.append((slot_start, slot_end))
+
+        # Merge consecutive vacant slots
+        if vacant_merged:
+            merged = [vacant_merged[0]]
+            for current in vacant_merged[1:]:
+                if current[0] == merged[-1][1]:
+                    merged[-1] = (merged[-1][0], current[1])
+                else:
+                    merged.append(current)
+            vacant_by_day[day] = merged
+
     return render_template('public_room.html',
         room=room,
         active_semester=active_semester,
@@ -92,9 +154,9 @@ def public_room(room_id):
         subject_colors=subject_colors,
         days=days,
         seen_subjects=seen_subjects,
-        seen_instructors=seen_instructors
+        seen_instructors=seen_instructors,
+        vacant_by_day=vacant_by_day
     )
-
 # ─────────────────────────────────────────
 # ADMIN AUTH
 # ─────────────────────────────────────────
@@ -224,6 +286,69 @@ def admin_room_delete(room_id):
     flash('Room deleted.', 'success')
     return redirect(url_for('admin_rooms'))
 
+# ─────────────────────────────────────────
+# ROOM RESERVATIONS (VACANT SLOTS)
+# ─────────────────────────────────────────
+
+@app.route('/admin/rooms/<int:room_id>/reservations')
+@login_required
+def admin_reservations(room_id):
+    room = Room.query.get_or_404(room_id)
+    semesters = Semester.query.order_by(Semester.created_at.desc()).all()
+    active_semester = Semester.query.filter_by(is_active=True).first()
+
+    sem_id = request.args.get('semester_id', active_semester.id if active_semester else None)
+    reservations = []
+    selected_semester = None
+    if sem_id:
+        selected_semester = Semester.query.get(sem_id)
+        reservations = RoomReservation.query.filter_by(
+            room_id=room_id,
+            semester_id=sem_id
+        ).order_by(RoomReservation.day, RoomReservation.time_start).all()
+
+    days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
+    return render_template('admin/reservations.html',
+        room=room,
+        semesters=semesters,
+        selected_semester=selected_semester,
+        reservations=reservations,
+        days=days
+    )
+
+@app.route('/admin/rooms/<int:room_id>/reservations/add', methods=['POST'])
+@login_required
+def admin_reservation_add(room_id):
+    semester_id = request.form.get('semester_id')
+    day = request.form.get('day')
+    time_start_str = request.form.get('time_start')
+    time_end_str = request.form.get('time_end')
+
+    time_start = datetime.strptime(time_start_str, '%H:%M').time()
+    time_end = datetime.strptime(time_end_str, '%H:%M').time()
+
+    reservation = RoomReservation(
+        room_id=room_id,
+        semester_id=semester_id,
+        day=day,
+        time_start=time_start,
+        time_end=time_end
+    )
+    db.session.add(reservation)
+    db.session.commit()
+    flash('Reservation added successfully.', 'success')
+    return redirect(url_for('admin_reservations', room_id=room_id, semester_id=semester_id))
+
+@app.route('/admin/reservations/<int:res_id>/delete', methods=['POST'])
+@login_required
+def admin_reservation_delete(res_id):
+    reservation = RoomReservation.query.get_or_404(res_id)
+    room_id = reservation.room_id
+    semester_id = reservation.semester_id
+    db.session.delete(reservation)
+    db.session.commit()
+    flash('Reservation deleted.', 'success')
+    return redirect(url_for('admin_reservations', room_id=room_id, semester_id=semester_id))
 # ─────────────────────────────────────────
 # SCHEDULE MANAGEMENT
 # ─────────────────────────────────────────
@@ -407,6 +532,15 @@ def admin_subject_delete(sub_id):
     db.session.delete(subject)
     db.session.commit()
     flash('Subject deleted.', 'success')
+    return redirect(url_for('admin_subjects'))
+@app.route('/admin/subjects/<int:sub_id>/edit', methods=['POST'])
+@login_required
+
+def admin_subject_edit(sub_id):
+    subject = Subject.query.get_or_404(sub_id)
+    subject.color = request.form.get('color', '#3498db')
+    db.session.commit()
+    flash('Subject color updated.', 'success')
     return redirect(url_for('admin_subjects'))
 
 @app.route('/admin/subjects/api')
