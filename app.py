@@ -612,15 +612,10 @@ def admin_instructors_api():
 # QR CODE
 # ─────────────────────────────────────────
 
-@app.route('/admin/rooms/<int:room_id>/qr')
-@login_required
-def admin_qr(room_id):
-    room = Room.query.get_or_404(room_id)
-    return render_template('admin/qr_page.html', room=room)
-
 @app.route('/admin/rooms/<int:room_id>/qr/download')
 @login_required
 def admin_qr_download(room_id):
+    from PIL import Image, ImageDraw, ImageFont
     room = Room.query.get_or_404(room_id)
     url = request.host_url + f'room/{room_id}'
 
@@ -630,12 +625,8 @@ def admin_qr_download(room_id):
     qr.make(fit=True)
     qr_img = qr.make_image(fill_color='black', back_color='white').convert('RGB')
 
-    from PIL import Image, ImageDraw, ImageFont
-    import textwrap
-
     qr_w, qr_h = qr_img.size
 
-    # Create canvas with extra space for title and URL
     # Create canvas with extra space for title and URL
     padding = 30
     title_height = 70
@@ -690,6 +681,14 @@ def admin_qr_download(room_id):
     url_x = (total_width - url_w) // 2
     url_y = padding + title_height + qr_h + 10
     draw.text((url_x, url_y), url, fill='#555555', font=font_url)
+
+    buf = io.BytesIO()
+    canvas.save(buf, format='PNG')
+    buf.seek(0)
+
+    return send_file(buf, mimetype='image/png',
+                     as_attachment=True,
+                     download_name=f'QR_{room.name}.png')
 # ─────────────────────────────────────────
 # ADMIN SETTINGS
 # ─────────────────────────────────────────
