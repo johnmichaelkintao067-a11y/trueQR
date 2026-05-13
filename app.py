@@ -624,19 +624,59 @@ def admin_qr_download(room_id):
     room = Room.query.get_or_404(room_id)
     url = request.host_url + f'room/{room_id}'
 
+    # Generate QR
     qr = qrcode.QRCode(version=1, box_size=10, border=4)
     qr.add_data(url)
     qr.make(fit=True)
-    img = qr.make_image(fill_color='black', back_color='white')
+    qr_img = qr.make_image(fill_color='black', back_color='white').convert('RGB')
+
+    from PIL import Image, ImageDraw, ImageFont
+    import textwrap
+
+    qr_w, qr_h = qr_img.size
+
+    # Create canvas with extra space for title and URL
+    padding = 20
+    title_height = 50
+    url_height = 40
+    total_height = qr_h + title_height + url_height + (padding * 2)
+    total_width = qr_w + (padding * 2)
+
+    canvas = Image.new('RGB', (total_width, total_height), 'white')
+    draw = ImageDraw.Draw(canvas)
+
+    # Try to use a font, fallback to default
+    try:
+        font_title = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 22)
+        font_url = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 16)
+    except:
+        font_title = ImageFont.load_default()
+        font_url = ImageFont.load_default()
+
+    # Draw room name at top
+    title_text = room.name
+    bbox = draw.textbbox((0, 0), title_text, font=font_title)
+    text_w = bbox[2] - bbox[0]
+    title_x = (total_width - text_w) // 2
+    draw.text((title_x, padding), title_text, fill='black', font=font_title)
+
+    # Paste QR code
+    canvas.paste(qr_img, (padding, padding + title_height))
+
+    # Draw URL at bottom
+    bbox2 = draw.textbbox((0, 0), url, font=font_url)
+    url_w = bbox2[2] - bbox2[0]
+    url_x = (total_width - url_w) // 2
+    url_y = padding + title_height + qr_h + 10
+    draw.text((url_x, url_y), url, fill='#555555', font=font_url)
 
     buf = io.BytesIO()
-    img.save(buf, format='PNG')
+    canvas.save(buf, format='PNG')
     buf.seek(0)
 
     return send_file(buf, mimetype='image/png',
                      as_attachment=True,
                      download_name=f'QR_{room.name}.png')
-
 # ─────────────────────────────────────────
 # ADMIN SETTINGS
 # ─────────────────────────────────────────

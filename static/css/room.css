@@ -332,14 +332,12 @@ body {
     display: flex;
     background: var(--bg-card);
     border-bottom: 1px solid var(--border);
-    overflow-x: auto;
-    scrollbar-width: none;
-    -webkit-overflow-scrolling: touch;
+    width: 100%;
 }
 
 .tab-btn {
-    flex: 0 0 auto;
-    padding: 0.75rem 0.85rem;
+    flex: 1;
+    padding: 0.85rem 0.25rem;
     background: none;
     border: none;
     border-bottom: 3px solid transparent;
@@ -347,14 +345,15 @@ body {
     font-size: 0.72rem;
     font-weight: 600;
     cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.3rem;
+    text-align: center;
     transition: all 0.2s;
     white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
+.tab-btn:hover { color: var(--text); background: var(--bg-card2); }
+.tab-btn.active { color: #e74c3c; border-bottom-color: #c0392b; }
 .tab-nav::-webkit-scrollbar { display: none; }
 
 .tab-btn {
