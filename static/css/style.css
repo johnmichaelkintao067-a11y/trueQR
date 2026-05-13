@@ -984,4 +984,19 @@ ul { list-style: none; }
     gap: 0.5rem;
 }
 
+.qr-room-label {
+    font-size: 1rem;
+    font-weight: 800;
+    color: #333;
+    margin-bottom: 0.5rem;
+    text-align: center;
+}
+
+.qr-url-label {
+    font-size: 0.7rem;
+    color: #555;
+    margin-top: 0.5rem;
+    text-align: center;
+    word-break: break-all;
+}
 .btn-sm.btn-info { background: #0984e3; color: white; }

@@ -334,6 +334,26 @@ body {
     border-bottom: 1px solid var(--border);
     overflow-x: auto;
     scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+}
+
+.tab-btn {
+    flex: 0 0 auto;
+    min-width: fit-content;
+    padding: 0.85rem 1rem;
+    background: none;
+    border: none;
+    border-bottom: 3px solid transparent;
+    color: var(--text-muted);
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    transition: all 0.2s;
+    white-space: nowrap;
 }
 
 .tab-nav::-webkit-scrollbar { display: none; }

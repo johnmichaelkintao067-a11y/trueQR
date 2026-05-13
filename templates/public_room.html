@@ -134,10 +134,10 @@
     <div class="mobile-only">
         <!-- DAY FILTER -->
         <div class="day-filter">
-            <button class="day-btn active" onclick="filterDay('all')">All</button>
-            {% for day in days %}
-            <button class="day-btn" onclick="filterDay('{{ day }}')">{{ day[:3] }}</button>
-            {% endfor %}
+            <button class="day-btn active" onclick="filterDay('all', this)">All</button>
+{% for day in days %}
+<button class="day-btn" onclick="filterDay('{{ day }}', this)">{{ day[:3] }}</button>
+{% endfor %}
         </div>
 
         {% for day in days %}
@@ -309,7 +309,6 @@
 </div>
 
 <script>
-// Tab switching
 function switchTab(tab, btn) {
     document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
     document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
@@ -318,7 +317,7 @@ function switchTab(tab, btn) {
 }
 
 function filterDay(day, btn) {
-    document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.day-filter .day-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     document.querySelectorAll('.mobile-day').forEach(el => {
         el.style.display = (day === 'all' || el.dataset.day === day) ? 'block' : 'none';
@@ -326,7 +325,7 @@ function filterDay(day, btn) {
 }
 
 function filterVacantDay(day, btn) {
-    document.querySelectorAll('.day-filter .day-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.vacant-day-filter .day-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     document.querySelectorAll('.vacant-day').forEach(el => {
         el.style.display = (day === 'all' || el.dataset.day === day) ? 'block' : 'none';

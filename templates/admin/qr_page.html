@@ -21,19 +21,21 @@
         <div class="admin-card" style="max-width: 500px; margin: 0 auto; text-align: center;">
 
             <div class="qr-room-name">{{ room.name }}</div>
-            <p class="qr-info">This QR code links directly to the public schedule page for this room.</p>
+<p class="qr-info">This QR code links directly to the public schedule page for this room.</p>
 
-            <!-- QR PREVIEW -->
-            <div class="qr-preview">
-                <img src="{{ url_for('admin_qr_download', room_id=room.id) }}"
-                     alt="QR Code for {{ room.name }}"
-                     class="qr-image" id="qrImage">
-            </div>
+<!-- QR PREVIEW -->
+<div class="qr-preview">
+    <div class="qr-room-label">{{ room.name }}</div>
+    <img src="{{ url_for('admin_qr_download', room_id=room.id) }}"
+         alt="QR Code for {{ room.name }}"
+         class="qr-image" id="qrImage">
+    <div class="qr-url-label" id="qrUrlLabel"></div>
+</div>
 
-            <p class="qr-url">
-                <i class="fas fa-link"></i>
-                <span id="qrUrl"></span>
-            </p>
+<p class="qr-url">
+    <i class="fas fa-link"></i>
+    <span id="qrUrl"></span>
+</p>
 
             <div class="qr-actions">
                 <a href="{{ url_for('admin_qr_download', room_id=room.id) }}"
@@ -61,8 +63,8 @@
 
 {% block scripts %}
 <script>
-    // Show the URL this QR points to
-    document.getElementById('qrUrl').textContent =
-        window.location.origin + '/room/{{ room.id }}';
+    const url = window.location.origin + '/room/{{ room.id }}';
+    document.getElementById('qrUrl').textContent = url;
+    document.getElementById('qrUrlLabel').textContent = url;
 </script>
 {% endblock %}
