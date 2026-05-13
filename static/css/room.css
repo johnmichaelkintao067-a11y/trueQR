@@ -333,11 +333,15 @@ body {
     background: var(--bg-card);
     border-bottom: 1px solid var(--border);
     width: 100%;
+    box-sizing: border-box;
 }
 
+.tab-nav::-webkit-scrollbar { display: none; }
+
 .tab-btn {
-    flex: 1;
-    padding: 0.85rem 0.25rem;
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 0.85rem 0.1rem;
     background: none;
     border: none;
     border-bottom: 3px solid transparent;
@@ -354,32 +358,6 @@ body {
 
 .tab-btn:hover { color: var(--text); background: var(--bg-card2); }
 .tab-btn.active { color: #e74c3c; border-bottom-color: #c0392b; }
-.tab-nav::-webkit-scrollbar { display: none; }
-
-.tab-btn {
-    flex: 1;
-    min-width: 80px;
-    padding: 0.85rem 0.5rem;
-    background: none;
-    border: none;
-    border-bottom: 3px solid transparent;
-    color: var(--text-muted);
-    font-size: 0.8rem;
-    font-weight: 600;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.4rem;
-    transition: all 0.2s;
-    white-space: nowrap;
-}
-
-.tab-btn:hover { color: var(--text); background: var(--bg-card2); }
-.tab-btn.active { color: var(--primary-light, #e74c3c); border-bottom-color: var(--primary); }
-
-.tab-content { padding: 0; }
-.tab-content.hidden { display: none; }
 
 /* DAY FILTER */
 .day-filter {

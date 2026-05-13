@@ -636,8 +636,9 @@ def admin_qr_download(room_id):
     qr_w, qr_h = qr_img.size
 
     # Create canvas with extra space for title and URL
-    padding = 20
-    title_height = 50
+    # Create canvas with extra space for title and URL
+    padding = 30
+    title_height = 70
     url_height = 40
     total_height = qr_h + title_height + url_height + (padding * 2)
     total_width = qr_w + (padding * 2)
@@ -647,18 +648,38 @@ def admin_qr_download(room_id):
 
     # Try to use a font, fallback to default
     try:
-        font_title = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 22)
-        font_url = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 16)
+        font_title = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 18)
+        font_url = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 14)
     except:
         font_title = ImageFont.load_default()
         font_url = ImageFont.load_default()
 
-    # Draw room name at top
-    title_text = room.name
-    bbox = draw.textbbox((0, 0), title_text, font=font_title)
-    text_w = bbox[2] - bbox[0]
-    title_x = (total_width - text_w) // 2
-    draw.text((title_x, padding), title_text, fill='black', font=font_title)
+    # Draw room name - wrap if too long
+    max_width = total_width - (padding * 2)
+    words = room.name.split()
+    lines = []
+    current_line = ''
+    for word in words:
+        test_line = current_line + (' ' if current_line else '') + word
+        bbox = draw.textbbox((0, 0), test_line, font=font_title)
+        if bbox[2] - bbox[0] <= max_width:
+            current_line = test_line
+        else:
+            if current_line:
+                lines.append(current_line)
+            current_line = word
+    if current_line:
+        lines.append(current_line)
+
+    line_height = 24
+    total_text_height = len(lines) * line_height
+    start_y = (title_height - total_text_height) // 2 + padding // 2
+
+    for i, line in enumerate(lines):
+        bbox = draw.textbbox((0, 0), line, font=font_title)
+        text_w = bbox[2] - bbox[0]
+        x = (total_width - text_w) // 2
+        draw.text((x, start_y + i * line_height), line, fill='#222222', font=font_title)
 
     # Paste QR code
     canvas.paste(qr_img, (padding, padding + title_height))
@@ -669,14 +690,6 @@ def admin_qr_download(room_id):
     url_x = (total_width - url_w) // 2
     url_y = padding + title_height + qr_h + 10
     draw.text((url_x, url_y), url, fill='#555555', font=font_url)
-
-    buf = io.BytesIO()
-    canvas.save(buf, format='PNG')
-    buf.seek(0)
-
-    return send_file(buf, mimetype='image/png',
-                     as_attachment=True,
-                     download_name=f'QR_{room.name}.png')
 # ─────────────────────────────────────────
 # ADMIN SETTINGS
 # ─────────────────────────────────────────
