@@ -237,7 +237,7 @@
 <div class="tab-content hidden" id="tab-vacant">
     <div class="vacant-container">
         <!-- DAY FILTER (mobile) -->
-        <div class="day-filter mobile-only" style="display:flex;">
+       <div class="day-filter mobile-only">
             <button class="day-btn active" onclick="filterVacantDay('all', this)">All</button>
             {% for day in days %}
             <button class="day-btn" onclick="filterVacantDay('{{ day }}', this)">{{ day[:3] }}</button>

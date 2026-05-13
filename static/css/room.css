@@ -471,3 +471,7 @@ body {
 .room-rules { margin: 1rem; }
 
 .hidden { display: none !important; }
+
+@media (max-width: 768px) {
+    .mobile-only.day-filter { display: flex; }
+}
