@@ -325,7 +325,7 @@ function filterDay(day, btn) {
 }
 
 function filterVacantDay(day, btn) {
-    document.querySelectorAll('.vacant-day-filter .day-btn').forEach(b => b.classList.remove('active'));
+    btn.closest('.day-filter').querySelectorAll('.day-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     document.querySelectorAll('.vacant-day').forEach(el => {
         el.style.display = (day === 'all' || el.dataset.day === day) ? 'block' : 'none';
