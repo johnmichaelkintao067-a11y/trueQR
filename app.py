@@ -533,9 +533,9 @@ def admin_subject_delete(sub_id):
     db.session.commit()
     flash('Subject deleted.', 'success')
     return redirect(url_for('admin_subjects'))
+
 @app.route('/admin/subjects/<int:sub_id>/edit', methods=['POST'])
 @login_required
-
 def admin_subject_edit(sub_id):
     subject = Subject.query.get_or_404(sub_id)
     subject.color = request.form.get('color', '#3498db')
@@ -611,6 +611,11 @@ def admin_instructors_api():
 # ─────────────────────────────────────────
 # QR CODE
 # ─────────────────────────────────────────
+@app.route('/admin/rooms/<int:room_id>/qr')
+@login_required
+def admin_qr(room_id):
+    room = Room.query.get_or_404(room_id)
+    return render_template('admin/qr_page.html', room=room)
 
 @app.route('/admin/rooms/<int:room_id>/qr/download')
 @login_required

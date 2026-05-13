@@ -469,3 +469,5 @@ body {
 
 /* RULES inside tab */
 .room-rules { margin: 1rem; }
+
+.hidden { display: none !important; }
