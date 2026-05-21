@@ -68,7 +68,7 @@ class RoomReservation(db.Model):
     time_end = db.Column(db.Time, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-    class EnrollmentSettings(db.Model):
+class EnrollmentSettings(db.Model):
     __tablename__ = 'enrollment_settings'
     id = db.Column(db.Integer, primary_key=True)
     school_email = db.Column(db.String(100), default='acsicollegeiloilo31@gmail.com')
