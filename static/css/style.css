@@ -1019,3 +1019,11 @@ ul { list-style: none; }
     word-break: break-all;
 }
 .btn-sm.btn-info { background: #0984e3; color: white; }
+
+/* DYNAMIC ITEMS */
+.dynamic-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}

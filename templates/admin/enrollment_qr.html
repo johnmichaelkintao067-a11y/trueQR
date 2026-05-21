@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}Enrollment QR Code — ACSI Admin{% endblock %}
+
+{% block content %}
+<section class="admin-header">
+    <div class="container">
+        <div class="admin-header-content">
+            <div>
+                <h1 class="admin-title"><i class="fas fa-qrcode"></i> Enrollment QR Code</h1>
+                <p class="admin-sub">Generate and download the QR code for the enrollment page</p>
+            </div>
+            <a href="{{ url_for('admin_enrollment') }}" class="btn btn-outline-sm">
+                <i class="fas fa-arrow-left"></i> Back to Enrollment
+            </a>
+        </div>
+    </div>
+</section>
+
+<section class="section">
+    <div class="container">
+        <div class="admin-card" style="max-width: 500px; margin: 0 auto; text-align: center;">
+
+            <div class="qr-room-name">ACSI College Iloilo</div>
+            <p class="qr-info">This QR code links directly to the enrollment information page.</p>
+
+            <!-- QR PREVIEW -->
+            <div class="qr-preview">
+                <div class="qr-room-label">ACSI College Iloilo — Enroll Now</div>
+                <img src="{{ url_for('admin_enrollment_qr_download') }}"
+                     alt="Enrollment QR Code"
+                     class="qr-image">
+                <div class="qr-url-label" id="qrUrlLabel"></div>
+            </div>
+
+            <p class="qr-url">
+                <i class="fas fa-link"></i>
+                <span id="qrUrl"></span>
+            </p>
+
+            <div class="qr-actions">
+                <a href="{{ url_for('admin_enrollment_qr_download') }}"
+                   download="QR_Enrollment.png"
+                   class="btn btn-primary">
+                    <i class="fas fa-download"></i> Download QR Code
+                </a>
+                <a href="{{ url_for('public_enroll') }}"
+                   target="_blank" class="btn btn-outline-sm">
+                    <i class="fas fa-eye"></i> Preview Enrollment Page
+                </a>
+            </div>
+
+            <div class="qr-note">
+                <i class="fas fa-info-circle"></i>
+                <p>Print this QR code and include it in your enrollment flyers. Students can scan it to access enrollment information anytime.</p>
+            </div>
+
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const url = window.location.origin + '/enroll';
+    document.getElementById('qrUrl').textContent = url;
+    document.getElementById('qrUrlLabel').textContent = url;
+</script>
+{% endblock %}

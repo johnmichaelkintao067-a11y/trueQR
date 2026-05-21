@@ -6,3 +6,4 @@ bcrypt
 qrcode[pil]
 python-dotenv
 gunicorn
+reportlab

@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+{% block title %}Enrollment Settings — ACSI Admin{% endblock %}
+
+{% block content %}
+<section class="admin-header">
+    <div class="container">
+        <div class="admin-header-content">
+            <div>
+                <h1 class="admin-title"><i class="fas fa-graduation-cap"></i> Enrollment Settings</h1>
+                <p class="admin-sub">Manage enrollment information, requirements and courses</p>
+            </div>
+            <div class="header-actions">
+                <a href="{{ url_for('admin_enrollment_qr') }}" class="btn btn-primary">
+                    <i class="fas fa-qrcode"></i> Generate QR
+                </a>
+                <a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline-sm">
+                    <i class="fas fa-arrow-left"></i> Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="section">
+    <div class="container">
+        <form method="POST" action="{{ url_for('admin_enrollment_update') }}">
+
+            <!-- CONTACT & PAYMENT -->
+            <div class="admin-card">
+                <h2 class="card-title"><i class="fas fa-money-bill-wave"></i> Payment & Contact Details</h2>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">SCHOOL EMAIL <span class="required">*</span></label>
+                        <input type="email" name="school_email" class="form-input"
+                            value="{{ settings.school_email }}" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">GCASH NUMBER</label>
+                        <input type="text" name="gcash_number" class="form-input"
+                            value="{{ settings.gcash_number }}">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">GCASH NAME</label>
+                        <input type="text" name="gcash_name" class="form-input"
+                            value="{{ settings.gcash_name }}">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">PALAWAN NUMBER</label>
+                        <input type="text" name="palawan_number" class="form-input"
+                            value="{{ settings.palawan_number }}">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">PALAWAN NAME</label>
+                        <input type="text" name="palawan_name" class="form-input"
+                            value="{{ settings.palawan_name }}">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">PAYMENT NOTES</label>
+                    <textarea name="payment_notes" class="form-textarea" rows="3">{{ settings.payment_notes }}</textarea>
+                </div>
+            </div>
+
+            <!-- REQUIREMENTS -->
+            <div class="admin-card">
+                <h2 class="card-title"><i class="fas fa-list-check"></i> Enrollment Requirements</h2>
+                <p class="form-hint" style="margin-bottom:1rem;">Add or remove requirements. Each line is one requirement.</p>
+                <div id="requirements-list">
+                    {% for req in requirements %}
+                    <div class="dynamic-item">
+                        <input type="text" name="requirements[]" class="form-input"
+                            value="{{ req }}">
+                        <button type="button" class="btn-sm btn-danger" onclick="removeItem(this)">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                    {% endfor %}
+                </div>
+                <button type="button" class="btn btn-outline-sm" style="margin-top:0.75rem;"
+                    onclick="addItem('requirements-list', 'requirements[]')">
+                    <i class="fas fa-plus"></i> Add Requirement
+                </button>
+            </div>
+
+            <!-- COURSES -->
+            <div class="admin-card">
+                <h2 class="card-title"><i class="fas fa-graduation-cap"></i> Courses Offered</h2>
+                <p class="form-hint" style="margin-bottom:1rem;">Add or remove courses offered.</p>
+                <div id="courses-list">
+                    {% for course in courses %}
+                    <div class="dynamic-item">
+                        <input type="text" name="courses[]" class="form-input"
+                            value="{{ course }}">
+                        <button type="button" class="btn-sm btn-danger" onclick="removeItem(this)">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                    {% endfor %}
+                </div>
+                <button type="button" class="btn btn-outline-sm" style="margin-top:0.75rem;"
+                    onclick="addItem('courses-list', 'courses[]')">
+                    <i class="fas fa-plus"></i> Add Course
+                </button>
+            </div>
+
+            <div class="form-buttons">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Save Changes
+                </button>
+                <a href="{{ url_for('public_enroll') }}" target="_blank" class="btn btn-outline-sm">
+                    <i class="fas fa-eye"></i> Preview Public Page
+                </a>
+            </div>
+
+        </form>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function addItem(listId, fieldName) {
+    const list = document.getElementById(listId);
+    const div = document.createElement('div');
+    div.className = 'dynamic-item';
+    div.innerHTML = `
+        <input type="text" name="${fieldName}" class="form-input" placeholder="Type here...">
+        <button type="button" class="btn-sm btn-danger" onclick="removeItem(this)">
+            <i class="fas fa-trash"></i>
+        </button>
+    `;
+    list.appendChild(div);
+}
+
+function removeItem(btn) {
+    btn.closest('.dynamic-item').remove();
+}
+</script>
+{% endblock %}

@@ -1,7 +1,7 @@
 from flask import Flask, render_template, redirect, url_for, request, flash, jsonify, send_file
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from config import Config
-from models import db, Admin, Semester, Room, Subject, Schedule, Instructor, RoomReservation
+from models import db, Admin, Semester, Room, Subject, Schedule, Instructor, RoomReservation, EnrollmentSettings
 import bcrypt
 import qrcode
 import io
@@ -724,6 +724,365 @@ def admin_settings():
 # ─────────────────────────────────────────
 # INIT DB + DEFAULT ADMIN
 # ─────────────────────────────────────────
+# ─────────────────────────────────────────
+# ENROLLMENT - PUBLIC
+# ─────────────────────────────────────────
+
+@app.route('/enroll')
+def public_enroll():
+    settings = EnrollmentSettings.query.first()
+    if not settings:
+        settings = EnrollmentSettings()
+    
+    import json
+    requirements = json.loads(settings.requirements) if settings.requirements else []
+    courses = json.loads(settings.courses) if settings.courses else []
+    
+    return render_template('public_enroll.html',
+        settings=settings,
+        requirements=requirements,
+        courses=courses
+    )
+
+@app.route('/enroll/download')
+def enroll_download():
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib import colors
+    from reportlab.lib.units import mm
+    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image, HRFlowable
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.enums import TA_CENTER, TA_LEFT
+    import os
+
+    buf = io.BytesIO()
+    doc = SimpleDocTemplate(buf, pagesize=A4,
+        rightMargin=15*mm, leftMargin=15*mm,
+        topMargin=10*mm, bottomMargin=10*mm)
+
+    styles = getSampleStyleSheet()
+    elements = []
+
+    # Header styles
+    title_style = ParagraphStyle('title',
+        fontSize=11, fontName='Helvetica-Bold',
+        alignment=TA_CENTER, spaceAfter=2)
+    sub_style = ParagraphStyle('sub',
+        fontSize=9, fontName='Helvetica',
+        alignment=TA_CENTER, spaceAfter=2)
+    label_style = ParagraphStyle('label',
+        fontSize=8, fontName='Helvetica-Bold',
+        alignment=TA_LEFT)
+    normal_style = ParagraphStyle('normal',
+        fontSize=8, fontName='Helvetica',
+        alignment=TA_LEFT)
+    center_style = ParagraphStyle('center',
+        fontSize=8, fontName='Helvetica',
+        alignment=TA_CENTER)
+
+    # ── HEADER ──
+    logo_path = os.path.join(app.root_path, 'static', 'assets', 'acsi_logo.png')
+    
+    if os.path.exists(logo_path):
+        logo = Image(logo_path, width=18*mm, height=18*mm)
+    else:
+        logo = Paragraph('', normal_style)
+
+    header_data = [[
+        logo,
+        [
+            Paragraph('ACSI College Iloilo Inc.', title_style),
+            Paragraph('The HOME of 200 Pesos Lang Down Payment', sub_style),
+            Paragraph("STUDENT'S INFORMATION SHEET", ParagraphStyle('form_title',
+                fontSize=12, fontName='Helvetica-Bold', alignment=TA_CENTER)),
+        ]
+    ]]
+    
+    header_table = Table(header_data, colWidths=[22*mm, 153*mm])
+    header_table.setStyle(TableStyle([
+        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+        ('ALIGN', (0,0), (0,0), 'CENTER'),
+    ]))
+    elements.append(header_table)
+    elements.append(Spacer(1, 3*mm))
+
+    # ── INFO ROW ──
+    info_data = [['Semester: _______________', 'School Year: _______________', 'Date: _______________']]
+    info_table = Table(info_data, colWidths=[58*mm, 58*mm, 59*mm])
+    info_table.setStyle(TableStyle([
+        ('FONTSIZE', (0,0), (-1,-1), 8),
+        ('FONTNAME', (0,0), (-1,-1), 'Helvetica'),
+    ]))
+    elements.append(info_table)
+    elements.append(Spacer(1, 2*mm))
+
+    # ── STUDENT CLASSIFICATION ──
+    elements.append(Paragraph('Student Classification (Please check)', label_style))
+    elements.append(Spacer(1, 1*mm))
+    
+    class_data = [[
+        '☐ Inquired', '☐ New (SHS)', '☐ Old', '☐ Returnee', '☐ With Special Needs'
+    ],[
+        '☐ Day Class', '☐ Night Class', '☐ Transferee', '', ''
+    ]]
+    class_table = Table(class_data, colWidths=[35*mm, 35*mm, 25*mm, 35*mm, 45*mm])
+    class_table.setStyle(TableStyle([
+        ('FONTSIZE', (0,0), (-1,-1), 8),
+        ('FONTNAME', (0,0), (-1,-1), 'Helvetica'),
+    ]))
+    elements.append(class_table)
+    elements.append(Spacer(1, 2*mm))
+
+    # ── NAME FIELDS ──
+    def name_row(label):
+        return [[Paragraph(f'<b>{label}:</b>', label_style), '']]
+    
+    def make_field_table(rows):
+        t = Table(rows, colWidths=[35*mm, 140*mm])
+        t.setStyle(TableStyle([
+            ('FONTSIZE', (0,0), (-1,-1), 8),
+            ('LINEBELOW', (1,0), (1,-1), 0.5, colors.black),
+            ('VALIGN', (0,0), (-1,-1), 'BOTTOM'),
+            ('BOTTOMPADDING', (0,0), (-1,-1), 1),
+            ('TOPPADDING', (0,0), (-1,-1), 3),
+        ]))
+        return t
+
+    elements.append(make_field_table([
+        [Paragraph('<b>LAST NAME:</b>', label_style), ''],
+        [Paragraph('<b>FIRST NAME:</b>', label_style), ''],
+        [Paragraph('<b>MIDDLE NAME:</b>', label_style), ''],
+        [Paragraph('<b>MAIDEN NAME:</b>', label_style), ''],
+    ]))
+    elements.append(Spacer(1, 2*mm))
+
+    # ── ADDRESS ──
+    elements.append(Paragraph('<b>Provincial Address:</b>', label_style))
+    addr_data = [['Street/Zone/Phase/Block', 'Barangay', 'District', 'Municipality/City', 'Province']]
+    addr_table = Table(addr_data, colWidths=[40*mm, 30*mm, 25*mm, 35*mm, 45*mm])
+    addr_table.setStyle(TableStyle([
+        ('FONTSIZE', (0,0), (-1,-1), 7),
+        ('FONTNAME', (0,0), (-1,-1), 'Helvetica'),
+        ('LINEABOVE', (0,0), (-1,0), 0.5, colors.black),
+        ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+        ('TOPPADDING', (0,0), (-1,-1), 1),
+    ]))
+    elements.append(addr_table)
+    elements.append(Spacer(1, 1*mm))
+
+    elements.append(Paragraph('<b>City Address:</b>', label_style))
+    elements.append(addr_table)
+    elements.append(Spacer(1, 2*mm))
+
+    # ── PERSONAL DETAILS ──
+    personal_data = [
+        ['Sex: _______________', 'Civil Status: _______________', 'Nationality: _______________'],
+        ['Age: _______________', 'Date of Birth: _______________', 'Place of Birth: _______________'],
+        ['Contact Number: _______________', 'Occupation: _______________', 'Religion: _______________'],
+        ['Mother\'s Name: _______________', '', ''],
+        ['Father\'s Name: _______________', '', ''],
+        ['Guardian\'s Name: _______________', '', ''],
+    ]
+    personal_table = Table(personal_data, colWidths=[58*mm, 58*mm, 59*mm])
+    personal_table.setStyle(TableStyle([
+        ('FONTSIZE', (0,0), (-1,-1), 8),
+        ('FONTNAME', (0,0), (-1,-1), 'Helvetica'),
+        ('TOPPADDING', (0,0), (-1,-1), 2),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 2),
+        ('SPAN', (0,3), (2,3)),
+        ('SPAN', (0,4), (2,4)),
+        ('SPAN', (0,5), (2,5)),
+    ]))
+    elements.append(personal_table)
+    elements.append(Spacer(1, 2*mm))
+
+    # ── EDUCATIONAL BACKGROUND ──
+    elements.append(HRFlowable(width="100%", thickness=1, color=colors.black))
+    elements.append(Paragraph('<b>EDUCATIONAL BACKGROUND</b>', ParagraphStyle('eb',
+        fontSize=9, fontName='Helvetica-Bold', alignment=TA_CENTER, spaceAfter=2)))
+    elements.append(HRFlowable(width="100%", thickness=1, color=colors.black))
+    elements.append(Spacer(1, 1*mm))
+
+    def edu_section(title):
+        elems = []
+        elems.append(Paragraph(f'<b>{title}</b>', label_style))
+        sub_data = [['School Name:', 'School Year (Graduated):']]
+        sub_table = Table(sub_data, colWidths=[120*mm, 55*mm])
+        sub_table.setStyle(TableStyle([
+            ('FONTSIZE', (0,0), (-1,-1), 8),
+            ('LINEBELOW', (0,0), (0,0), 0.5, colors.black),
+            ('LINEBELOW', (1,0), (1,0), 0.5, colors.black),
+            ('TOPPADDING', (0,0), (-1,-1), 4),
+        ]))
+        elems.append(sub_table)
+        addr2_data = [['Street/Zone/Phase/Block', 'Barangay', 'District', 'Municipality/City', 'Province']]
+        addr2_table = Table(addr2_data, colWidths=[40*mm, 30*mm, 25*mm, 35*mm, 45*mm])
+        addr2_table.setStyle(TableStyle([
+            ('FONTSIZE', (0,0), (-1,-1), 7),
+            ('FONTNAME', (0,0), (-1,-1), 'Helvetica'),
+            ('LINEABOVE', (0,0), (-1,0), 0.5, colors.black),
+            ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+            ('TOPPADDING', (0,0), (-1,-1), 1),
+        ]))
+        elems.append(Paragraph('School Address:', normal_style))
+        elems.append(addr2_table)
+        elems.append(Spacer(1, 2*mm))
+        return elems
+
+    elements.extend(edu_section('ELEMENTARY (Name of School)'))
+    elements.extend(edu_section('SECONDARY EDUCATION - High School (Name of School)'))
+    elements.extend(edu_section('TERTIARY EDUCATION - College (Name of School)\nFor Transferee/Short-Term Enrollee'))
+
+    # ── COURSE TO ENROLL ──
+    elements.append(HRFlowable(width="100%", thickness=1, color=colors.black))
+    elements.append(Paragraph('<b>COURSE TO ENROLL: (Please check)</b>', label_style))
+    elements.append(Spacer(1, 1*mm))
+
+    courses_list = [
+        '☐ Bachelor of Science in Computer Science',
+        '☐ Bachelor of Science in Information System',
+        '☐ Associate in Computer Technology',
+        '☐ Short Term Course (STC)',
+    ]
+    for course in courses_list:
+        elements.append(Paragraph(course, normal_style))
+        elements.append(Spacer(1, 1*mm))
+
+    elements.append(Spacer(1, 5*mm))
+
+    # ── SIGNATURES ──
+    sig_data = [[
+        "Student's Name & Signature\n\n___________________________",
+        '',
+        "Cashier's Signature\n\n___________________________",
+    ],[
+        '',
+        '',
+        "Registrar's Signature\n\n___________________________",
+    ]]
+    sig_table = Table(sig_data, colWidths=[70*mm, 35*mm, 70*mm])
+    sig_table.setStyle(TableStyle([
+        ('FONTSIZE', (0,0), (-1,-1), 8),
+        ('FONTNAME', (0,0), (-1,-1), 'Helvetica'),
+        ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+        ('VALIGN', (0,0), (-1,-1), 'BOTTOM'),
+        ('TOPPADDING', (0,0), (-1,-1), 3),
+    ]))
+    elements.append(sig_table)
+    elements.append(Spacer(1, 3*mm))
+    elements.append(Paragraph('CR#: _______________', normal_style))
+
+    doc.build(elements)
+    buf.seek(0)
+
+    return send_file(buf, mimetype='application/pdf',
+                     as_attachment=True,
+                     download_name='ACSI_Enrollment_Form.pdf')
+
+# ─────────────────────────────────────────
+# ENROLLMENT - ADMIN
+# ─────────────────────────────────────────
+
+@app.route('/admin/enrollment')
+@login_required
+def admin_enrollment():
+    settings = EnrollmentSettings.query.first()
+    if not settings:
+        settings = EnrollmentSettings()
+        db.session.add(settings)
+        db.session.commit()
+
+    import json
+    requirements = json.loads(settings.requirements) if settings.requirements else []
+    courses = json.loads(settings.courses) if settings.courses else []
+
+    return render_template('admin/enrollment.html',
+        settings=settings,
+        requirements=requirements,
+        courses=courses
+    )
+
+@app.route('/admin/enrollment/update', methods=['POST'])
+@login_required
+def admin_enrollment_update():
+    import json
+    settings = EnrollmentSettings.query.first()
+    if not settings:
+        settings = EnrollmentSettings()
+        db.session.add(settings)
+
+    settings.school_email = request.form.get('school_email')
+    settings.gcash_number = request.form.get('gcash_number')
+    settings.gcash_name = request.form.get('gcash_name')
+    settings.palawan_number = request.form.get('palawan_number')
+    settings.palawan_name = request.form.get('palawan_name')
+    settings.payment_notes = request.form.get('payment_notes')
+
+    # Requirements
+    reqs = request.form.getlist('requirements[]')
+    reqs = [r.strip() for r in reqs if r.strip()]
+    settings.requirements = json.dumps(reqs)
+
+    # Courses
+    courses = request.form.getlist('courses[]')
+    courses = [c.strip() for c in courses if c.strip()]
+    settings.courses = json.dumps(courses)
+
+    db.session.commit()
+    flash('Enrollment settings updated successfully.', 'success')
+    return redirect(url_for('admin_enrollment'))
+
+@app.route('/admin/enrollment/qr')
+@login_required
+def admin_enrollment_qr():
+    return render_template('admin/enrollment_qr.html')
+
+@app.route('/admin/enrollment/qr/download')
+@login_required
+def admin_enrollment_qr_download():
+    from PIL import Image, ImageDraw, ImageFont
+    url = request.host_url + 'enroll'
+
+    qr = qrcode.QRCode(version=1, box_size=10, border=4)
+    qr.add_data(url)
+    qr.make(fit=True)
+    qr_img = qr.make_image(fill_color='black', back_color='white').convert('RGB')
+
+    qr_w, qr_h = qr_img.size
+    padding = 30
+    title_height = 60
+    url_height = 40
+    total_height = qr_h + title_height + url_height + (padding * 2)
+    total_width = qr_w + (padding * 2)
+
+    canvas = Image.new('RGB', (total_width, total_height), 'white')
+    draw = ImageDraw.Draw(canvas)
+
+    try:
+        font_title = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 18)
+        font_url = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 14)
+    except:
+        font_title = ImageFont.load_default()
+        font_url = ImageFont.load_default()
+
+    title = "ACSI College Iloilo — Enrollment"
+    bbox = draw.textbbox((0, 0), title, font=font_title)
+    text_w = bbox[2] - bbox[0]
+    draw.text(((total_width - text_w) // 2, padding), title, fill='#222222', font=font_title)
+
+    canvas.paste(qr_img, (padding, padding + title_height))
+
+    bbox2 = draw.textbbox((0, 0), url, font=font_url)
+    url_w = bbox2[2] - bbox2[0]
+    draw.text(((total_width - url_w) // 2, padding + title_height + qr_h + 10), url, fill='#555555', font=font_url)
+
+    buf = io.BytesIO()
+    canvas.save(buf, format='PNG')
+    buf.seek(0)
+
+    return send_file(buf, mimetype='image/png',
+                     as_attachment=True,
+                     download_name='QR_Enrollment.png')
+
 
 def init_db():
     with app.app_context():

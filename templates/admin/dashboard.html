@@ -79,11 +79,16 @@
                 <h3 class="action-title">Instructor Library</h3>
                 <p class="action-sub">Manage instructors and their info</p>
             </a>
-            <a href="{{ url_for('admin_settings') }}" class="action-card">
-                <i class="fas fa-cog action-icon"></i>
-                <h3 class="action-title">Settings</h3>
-                <p class="action-sub">Change username and password</p>
-            </a>
+            <a href="{{ url_for('admin_enrollment') }}" class="action-card">
+    <i class="fas fa-graduation-cap action-icon"></i>
+    <h3 class="action-title">Enrollment</h3>
+    <p class="action-sub">Manage enrollment info and QR</p>
+</a>
+<a href="{{ url_for('admin_settings') }}" class="action-card">
+    <i class="fas fa-cog action-icon"></i>
+    <h3 class="action-title">Settings</h3>
+    <p class="action-sub">Change username and password</p>
+</a>
         </div>
 
     </div>

@@ -67,3 +67,17 @@ class RoomReservation(db.Model):
     time_start = db.Column(db.Time, nullable=False)
     time_end = db.Column(db.Time, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    class EnrollmentSettings(db.Model):
+    __tablename__ = 'enrollment_settings'
+    id = db.Column(db.Integer, primary_key=True)
+    school_email = db.Column(db.String(100), default='acsicollegeiloilo31@gmail.com')
+    gcash_number = db.Column(db.String(20), default='09639859782')
+    gcash_name = db.Column(db.String(100), default='Chewyll Simora')
+    palawan_number = db.Column(db.String(20), default='09639859782')
+    palawan_name = db.Column(db.String(100), default='Chewyll Simora')
+    requirements = db.Column(db.Text)
+    courses = db.Column(db.Text)
+    payment_notes = db.Column(db.Text)
+    is_active = db.Column(db.Boolean, default=True)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

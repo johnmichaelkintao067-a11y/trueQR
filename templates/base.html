@@ -23,24 +23,27 @@
             <i class="fas fa-bars"></i>
         </button>
         <ul class="nav-links" id="navLinks">
-            <li><a href="{{ url_for('index') }}" class="nav-link {% if request.endpoint == 'index' %}active{% endif %}">
-                <i class="fas fa-home"></i> Home
-            </a></li>
-            <li><a href="{{ url_for('public_rooms') }}" class="nav-link {% if request.endpoint == 'public_rooms' %}active{% endif %}">
-                <i class="fas fa-door-open"></i> Room Schedules
-            </a></li>
-            <li><a href="#" class="nav-link disabled">
-                <i class="fas fa-graduation-cap"></i> Grades <span class="coming-soon">Soon</span>
-            </a></li>
-            <li><a href="#" class="nav-link disabled">
-                <i class="fas fa-bullhorn"></i> Announcements <span class="coming-soon">Soon</span>
-            </a></li>
-            {% if current_user.is_authenticated %}
-            <li><a href="{{ url_for('admin_dashboard') }}" class="nav-link nav-admin">
-                <i class="fas fa-shield-alt"></i> Admin
-            </a></li>
-            {% endif %}
-        </ul>
+    <li><a href="{{ url_for('index') }}" class="nav-link {% if request.endpoint == 'index' %}active{% endif %}">
+        <i class="fas fa-home"></i> Home
+    </a></li>
+    <li><a href="{{ url_for('public_rooms') }}" class="nav-link {% if request.endpoint == 'public_rooms' %}active{% endif %}">
+        <i class="fas fa-door-open"></i> Room Schedules
+    </a></li>
+    <li><a href="{{ url_for('public_enroll') }}" class="nav-link {% if request.endpoint == 'public_enroll' %}active{% endif %}">
+        <i class="fas fa-graduation-cap"></i> Enroll
+    </a></li>
+    <li><a href="#" class="nav-link disabled">
+        <i class="fas fa-graduation-cap"></i> Grades <span class="coming-soon">Soon</span>
+    </a></li>
+    <li><a href="#" class="nav-link disabled">
+        <i class="fas fa-bullhorn"></i> Announcements <span class="coming-soon">Soon</span>
+    </a></li>
+    {% if current_user.is_authenticated %}
+    <li><a href="{{ url_for('admin_dashboard') }}" class="nav-link nav-admin">
+        <i class="fas fa-shield-alt"></i> Admin
+    </a></li>
+    {% endif %}
+</ul>
     </div>
 </nav>
 
