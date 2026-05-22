@@ -744,6 +744,13 @@ def public_enroll():
         courses=courses
     )
 
+@app.route('/enroll/shs')
+def public_enroll_shs():
+    settings = EnrollmentSettings.query.first()
+    if not settings:
+        settings = EnrollmentSettings()
+    return render_template('public_enroll_shs.html', settings=settings)
+
 @app.route('/enroll/download')
 def enroll_download():
     from reportlab.lib.pagesizes import A4

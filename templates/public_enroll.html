@@ -3,247 +3,174 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Enroll — ACSI College Iloilo</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/room.css') }}">
+    <title>Enroll Now — ACSI College Iloilo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/enroll.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <style>
-        .enroll-container { padding: 1rem; max-width: 600px; margin: 0 auto; }
-        .enroll-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 1.25rem;
-            margin-bottom: 1rem;
-        }
-        .enroll-card-title {
-            font-size: 0.95rem;
-            font-weight: 700;
-            color: var(--primary);
-            margin-bottom: 1rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        .enroll-btn {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            background: var(--primary);
-            color: white;
-            padding: 0.85rem 1.25rem;
-            border-radius: 10px;
-            font-size: 0.9rem;
-            font-weight: 600;
-            text-decoration: none;
-            margin-bottom: 0.75rem;
-            transition: all 0.2s;
-        }
-        .enroll-btn:hover { background: var(--primary-dark); }
-        .enroll-btn-outline {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            background: transparent;
-            color: var(--primary);
-            border: 1px solid var(--primary);
-            padding: 0.85rem 1.25rem;
-            border-radius: 10px;
-            font-size: 0.9rem;
-            font-weight: 600;
-            text-decoration: none;
-            margin-bottom: 0.75rem;
-            transition: all 0.2s;
-        }
-        .enroll-btn-outline:hover { background: rgba(192,57,43,0.1); }
-        .payment-card {
-            background: var(--bg-card2);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 1rem;
-            margin-bottom: 0.75rem;
-        }
-        .payment-title {
-            font-size: 0.8rem;
-            font-weight: 700;
-            color: var(--text-muted);
-            margin-bottom: 0.5rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        .payment-number {
-            font-size: 1.2rem;
-            font-weight: 800;
-            color: var(--text);
-        }
-        .payment-name {
-            font-size: 0.82rem;
-            color: var(--text-muted);
-            margin-top: 0.2rem;
-        }
-        .req-item {
-            display: flex;
-            align-items: flex-start;
-            gap: 0.75rem;
-            padding: 0.6rem 0;
-            border-bottom: 1px solid var(--border);
-            font-size: 0.875rem;
-        }
-        .req-item:last-child { border-bottom: none; }
-        .req-icon { color: var(--primary); font-size: 0.8rem; margin-top: 2px; flex-shrink: 0; }
-        .course-item {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            padding: 0.75rem 0;
-            border-bottom: 1px solid var(--border);
-            font-size: 0.875rem;
-            font-weight: 500;
-        }
-        .course-item:last-child { border-bottom: none; }
-        .course-icon { color: var(--primary); flex-shrink: 0; }
-        .note-box {
-            background: rgba(192,57,43,0.08);
-            border: 1px solid rgba(192,57,43,0.3);
-            border-radius: 8px;
-            padding: 0.85rem;
-            font-size: 0.8rem;
-            color: var(--text-muted);
-            margin-top: 0.75rem;
-            line-height: 1.6;
-        }
-    </style>
 </head>
 <body>
 
 <!-- HEADER -->
-<div class="room-header">
-    <img src="{{ url_for('static', filename='assets/acsi_logo.png') }}" alt="ACSI Logo" class="room-logo">
-    <div class="room-header-text">
-        <h1 class="room-school">ACSI College Iloilo</h1>
-        <p class="room-tagline">Excellence in Education</p>
-        <p class="room-semester">Enrollment Information</p>
-    </div>
+<div class="enroll-header">
+    <div class="splash splash-1"></div>
+    <div class="splash splash-2"></div>
+    <img src="{{ url_for('static', filename='assets/acsi_logo.png') }}" alt="ACSI Logo" class="enroll-logo">
+    <h1 class="enroll-school-name">ACSI College Iloilo</h1>
+    <p class="enroll-tagline">"The Home of 200 Pesos Lang Down Payment!"</p>
+    <p class="enroll-address"><i class="fas fa-map-marker-alt"></i> 5th Floor Gaisano City, Lapaz, Iloilo City</p>
 </div>
 
-<!-- ROOM TITLE -->
-<div class="room-title-bar">
-    <h2 class="room-name"><i class="fas fa-graduation-cap"></i> Student Enrollment</h2>
-    <p class="room-subtitle">S.Y. 2026-2027</p>
+<!-- BANNER -->
+<div class="enroll-banner">
+    <div class="splash splash-1"></div>
+    <div class="splash splash-2"></div>
+    <div class="enroll-banner-text">
+        ENROLLMENT
+        <span>NOW GOING ON!!!</span>
+    </div>
+    <p class="enroll-banner-sub">S.Y. 2026-2027 — Open for All Courses</p>
+</div>
+
+<!-- SHS BUTTON -->
+<div class="shs-btn-wrap">
+    <a href="{{ url_for('public_enroll_shs') }}" class="shs-btn">
+        <i class="fas fa-star"></i>
+        Senior High School? Tap Here! — FREE TUITION!!
+        <i class="fas fa-star"></i>
+    </a>
 </div>
 
 <!-- TAB NAVIGATION -->
-<div class="tab-nav">
-    <button class="tab-btn active" onclick="switchTab('enroll', this)">Enroll Now</button>
-    <button class="tab-btn" onclick="switchTab('requirements', this)">Requirements</button>
-    <button class="tab-btn" onclick="switchTab('courses', this)">Courses</button>
+<div class="enroll-tab-nav">
+    <button class="enroll-tab-btn active" onclick="switchTab('enroll', this)">Enroll Now</button>
+    <button class="enroll-tab-btn" onclick="switchTab('requirements', this)">Requirements</button>
+    <button class="enroll-tab-btn" onclick="switchTab('courses', this)">Courses</button>
 </div>
 
 <!-- ─── TAB: ENROLL NOW ─── -->
-<div class="tab-content" id="tab-enroll">
-    <div class="enroll-container">
+<div class="enroll-tab-content" id="tab-enroll">
+    <div class="enroll-content">
 
-        <!-- Download Form -->
-        <div class="enroll-card">
-            <div class="enroll-card-title">
-                <i class="fas fa-file-pdf"></i> Enrollment Form
-            </div>
-            <p style="font-size:0.82rem; color:var(--text-muted); margin-bottom:1rem;">
-                Download the enrollment form, print it, fill it out, and submit it to the Registrar's Office together with your requirements and initial payment.
+        <div class="enroll-section">
+            <div class="enroll-section-title">📋 Enrollment Form</div>
+            <p style="font-size:0.85rem; color:rgba(255,255,255,0.9); margin-bottom:1rem; line-height:1.6;">
+                Download the enrollment form, print it, fill it out, and submit to the Registrar's Office with your requirements and initial payment.
             </p>
-            <a href="{{ url_for('enroll_download') }}" class="enroll-btn">
-                <i class="fas fa-download"></i> Download Enrollment Form (PDF)
-            </a>
-            <a href="mailto:{{ settings.school_email }}?subject=Online Enrollment Application&body=Good day! I would like to inquire about enrollment at ACSI College Iloilo." class="enroll-btn-outline">
-                <i class="fas fa-envelope"></i> Send via Email
-            </a>
-            <div class="note-box">
-                <i class="fas fa-info-circle"></i>
-                For online submission, email your accomplished form and scanned requirements to
-                <strong>{{ settings.school_email }}</strong>
-            </div>
+            <p style="font-size:0.82rem; color:rgba(255,255,255,0.8); margin-bottom:0.5rem;">
+                You may also fill it out online and email it to us!
+            </p>
         </div>
 
-        <!-- Payment Details -->
-        <div class="enroll-card">
-            <div class="enroll-card-title">
-                <i class="fas fa-money-bill-wave"></i> Payment Details
+        <div class="enroll-section">
+            <div class="enroll-section-title">💳 Payment Details</div>
+            <div class="payment-item">
+                <div class="payment-label"><i class="fas fa-mobile-alt"></i> GCash</div>
+                <div class="payment-num">{{ settings.gcash_number }}</div>
+                <div class="payment-nm">{{ settings.gcash_name }}</div>
             </div>
-            <p style="font-size:0.82rem; color:var(--text-muted); margin-bottom:0.75rem;">
+            <div class="payment-item">
+                <div class="payment-label"><i class="fas fa-store"></i> Palawan Padala</div>
+                <div class="payment-num">{{ settings.palawan_number }}</div>
+                <div class="payment-nm">{{ settings.palawan_name }}</div>
+            </div>
+            <div class="note-box-enroll" style="margin-top:0.75rem;">
                 {{ settings.payment_notes }}
-            </p>
-
-            <div class="payment-card">
-                <div class="payment-title"><i class="fas fa-mobile-alt"></i> GCash</div>
-                <div class="payment-number">{{ settings.gcash_number }}</div>
-                <div class="payment-name">{{ settings.gcash_name }}</div>
-            </div>
-
-            <div class="payment-card">
-                <div class="payment-title"><i class="fas fa-store"></i> Palawan Padala</div>
-                <div class="payment-number">{{ settings.palawan_number }}</div>
-                <div class="payment-name">{{ settings.palawan_name }}</div>
-            </div>
-
-            <div class="note-box">
-                <i class="fas fa-exclamation-triangle"></i>
-                Please send proof of payment to <strong>{{ settings.school_email }}</strong> after your transaction.
             </div>
         </div>
 
+        <div class="enroll-section">
+            <div class="enroll-section-title">📧 Contact Us</div>
+            <p style="font-size:0.85rem; color:rgba(255,255,255,0.9); line-height:1.6;">
+                Send your accomplished form and scanned requirements to:<br>
+                <strong style="color:#fff700; font-size:0.95rem;">{{ settings.school_email }}</strong>
+            </p>
+        </div>
+
+    </div>
+
+    <!-- ACTION BUTTONS AT BOTTOM -->
+    <div class="action-btns">
+        <a href="{{ url_for('enroll_download') }}" class="action-btn-primary">
+            <i class="fas fa-download"></i> Download Enrollment Form (PDF)
+        </a>
+        <a href="mailto:{{ settings.school_email }}?subject=Online Enrollment Application&body=Good day! I would like to enroll at ACSI College Iloilo."
+           class="action-btn-secondary">
+            <i class="fas fa-envelope"></i> Submit via Email
+        </a>
+        <div class="note-box-enroll">
+            <i class="fas fa-info-circle"></i>
+            Please send proof of payment to <strong>{{ settings.school_email }}</strong> after your transaction.
+        </div>
     </div>
 </div>
 
 <!-- ─── TAB: REQUIREMENTS ─── -->
-<div class="tab-content hidden" id="tab-requirements">
-    <div class="enroll-container">
-        <div class="enroll-card">
-            <div class="enroll-card-title">
-                <i class="fas fa-list-check"></i> Enrollment Requirements
-            </div>
+<div class="enroll-tab-content hidden" id="tab-requirements">
+    <div class="enroll-content">
+        <div class="enroll-section">
+            <div class="enroll-section-title">📄 Enrollment Requirements</div>
             {% for req in requirements %}
-            <div class="req-item">
-                <i class="fas fa-check-circle req-icon"></i>
+            <div class="req-list-item">
+                <div class="req-dot"></div>
                 <span>{{ req }}</span>
             </div>
             {% endfor %}
-            <div class="note-box" style="margin-top:1rem;">
+            <div class="note-box-enroll" style="margin-top:1rem;">
                 <i class="fas fa-info-circle"></i>
-                Please bring all original and photocopies of your documents upon enrollment.
+                Bring original and photocopies of all documents upon enrollment.
             </div>
         </div>
+    </div>
+
+    <div class="action-btns">
+        <a href="{{ url_for('enroll_download') }}" class="action-btn-primary">
+            <i class="fas fa-download"></i> Download Enrollment Form (PDF)
+        </a>
     </div>
 </div>
 
 <!-- ─── TAB: COURSES ─── -->
-<div class="tab-content hidden" id="tab-courses">
-    <div class="enroll-container">
-        <div class="enroll-card">
-            <div class="enroll-card-title">
-                <i class="fas fa-graduation-cap"></i> Courses Offered
-            </div>
+<div class="enroll-tab-content hidden" id="tab-courses">
+    <div class="enroll-content">
+        <div class="enroll-section">
+            <div class="enroll-section-title">🎓 Courses Offered</div>
             {% for course in courses %}
-            <div class="course-item">
-                <i class="fas fa-chevron-right course-icon"></i>
+            <div class="course-list-item">
+                <i class="fas fa-chevron-right course-arrow"></i>
                 <span>{{ course }}</span>
             </div>
             {% endfor %}
-            <div class="note-box" style="margin-top:1rem;">
+            <div class="note-box-enroll" style="margin-top:1rem;">
                 <i class="fas fa-info-circle"></i>
-                For more information about our courses, please visit the Registrar's Office or email us at <strong>{{ settings.school_email }}</strong>
+                For more info, visit the Registrar's Office or email
+                <strong>{{ settings.school_email }}</strong>
             </div>
         </div>
+
+        <!-- SHS Reminder -->
+        <a href="{{ url_for('public_enroll_shs') }}" class="shs-btn" style="display:flex; justify-content:center; margin-top:0.5rem;">
+            <i class="fas fa-star"></i>
+            Senior High School — FREE TUITION!!
+            <i class="fas fa-star"></i>
+        </a>
+    </div>
+
+    <div class="action-btns">
+        <a href="{{ url_for('enroll_download') }}" class="action-btn-primary">
+            <i class="fas fa-download"></i> Download Enrollment Form (PDF)
+        </a>
     </div>
 </div>
 
 <!-- FOOTER -->
-<div class="room-footer">
+<div class="enroll-footer">
     <p>© 2026 ACSI College Iloilo — Enrollment Portal</p>
+    <p style="margin-top:0.25rem;">5th Floor Gaisano City, Lapaz, Iloilo City</p>
 </div>
 
 <script>
 function switchTab(tab, btn) {
-    document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-    document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.enroll-tab-content').forEach(el => el.classList.add('hidden'));
+    document.querySelectorAll('.enroll-tab-btn').forEach(el => el.classList.remove('active'));
     document.getElementById('tab-' + tab).classList.remove('hidden');
     btn.classList.add('active');
 }

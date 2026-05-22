@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SHS Enrollment — ACSI College Iloilo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/enroll.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+
+<!-- SHS HEADER -->
+<div class="shs-header">
+    <div class="splash splash-1"></div>
+    <div class="splash splash-2"></div>
+    <img src="{{ url_for('static', filename='assets/acsi_logo.png') }}" alt="ACSI Logo" class="enroll-logo">
+    <h1 class="enroll-school-name">ACSI College Iloilo</h1>
+    <p class="enroll-tagline">"The Home of 200 Pesos Lang Down Payment!"</p>
+    <div class="shs-free-badge">
+        <i class="fas fa-star"></i> ABSOLUTELY FREE TUITION!! <i class="fas fa-star"></i>
+    </div>
+</div>
+
+<!-- BANNER -->
+<div class="enroll-banner" style="background: linear-gradient(135deg, rgba(142,68,173,0.4), rgba(192,57,43,0.4));">
+    <div class="splash splash-1"></div>
+    <div class="enroll-banner-text">
+        SENIOR HIGH
+        <span>SCHOOL</span>
+    </div>
+    <p class="enroll-banner-sub">Enrollment Now Open — S.Y. 2026-2027</p>
+</div>
+
+<div class="enroll-content" style="padding-top:1.25rem;">
+
+    <!-- BACK BUTTON -->
+    <a href="{{ url_for('public_enroll') }}" class="back-btn">
+        <i class="fas fa-arrow-left"></i> Back to Enrollment
+    </a>
+
+    <!-- FREE TUITION HIGHLIGHT -->
+    <div class="enroll-section" style="border: 2px solid #fff700; text-align:center;">
+        <div style="font-size:2rem; margin-bottom:0.5rem;">🎉</div>
+        <div class="enroll-section-title" style="font-size:1rem;">ABSOLUTELY FREE TUITION!!</div>
+        <p style="font-size:0.875rem; color:rgba(255,255,255,0.9); line-height:1.6;">
+            Senior High School at ACSI College Iloilo is <strong style="color:#fff700;">absolutely free!</strong>
+            Enroll now and enjoy quality education without the financial burden.
+        </p>
+    </div>
+
+    <!-- SHS REQUIREMENTS -->
+    <div class="enroll-section">
+        <div class="enroll-section-title">📄 SHS Requirements</div>
+        <div class="req-list-item">
+            <div class="req-dot"></div>
+            <span>2 pcs White Long Folders</span>
+        </div>
+        <div class="req-list-item">
+            <div class="req-dot"></div>
+            <span>Grade 10 Report Card with LRN</span>
+        </div>
+        <div class="req-list-item">
+            <div class="req-dot"></div>
+            <span>Photocopy of Birth Certificate (PSA)</span>
+        </div>
+        <div class="req-list-item">
+            <div class="req-dot"></div>
+            <span>2 pcs 2x2 ID Pictures</span>
+        </div>
+        <div class="note-box-enroll" style="margin-top:1rem;">
+            <i class="fas fa-info-circle"></i>
+            Bring original and photocopies of all documents upon enrollment.
+        </div>
+    </div>
+
+    <!-- PAYMENT DETAILS -->
+    <div class="enroll-section">
+        <div class="enroll-section-title">💳 Payment Details</div>
+        <p style="font-size:0.82rem; color:rgba(255,255,255,0.85); margin-bottom:0.75rem;">
+            {{ settings.payment_notes }}
+        </p>
+        <div class="payment-item">
+            <div class="payment-label"><i class="fas fa-mobile-alt"></i> GCash</div>
+            <div class="payment-num">{{ settings.gcash_number }}</div>
+            <div class="payment-nm">{{ settings.gcash_name }}</div>
+        </div>
+        <div class="payment-item">
+            <div class="payment-label"><i class="fas fa-store"></i> Palawan Padala</div>
+            <div class="payment-num">{{ settings.palawan_number }}</div>
+            <div class="payment-nm">{{ settings.palawan_name }}</div>
+        </div>
+    </div>
+
+    <!-- CONTACT -->
+    <div class="enroll-section">
+        <div class="enroll-section-title">📧 Contact Us</div>
+        <p style="font-size:0.85rem; color:rgba(255,255,255,0.9); line-height:1.6;">
+            Send your accomplished form and scanned requirements to:<br>
+            <strong style="color:#fff700; font-size:0.95rem;">{{ settings.school_email }}</strong>
+        </p>
+        <p style="font-size:0.82rem; color:rgba(255,255,255,0.8); margin-top:0.5rem;">
+            <i class="fas fa-map-marker-alt"></i>
+            5th Floor Gaisano City, Lapaz, Iloilo City
+        </p>
+    </div>
+
+</div>
+
+<!-- ACTION BUTTONS -->
+<div class="action-btns">
+    <a href="{{ url_for('enroll_download') }}" class="action-btn-primary">
+        <i class="fas fa-download"></i> Download Enrollment Form (PDF)
+    </a>
+    <a href="mailto:{{ settings.school_email }}?subject=SHS Enrollment Application&body=Good day! I would like to enroll in Senior High School at ACSI College Iloilo."
+       class="action-btn-secondary">
+        <i class="fas fa-envelope"></i> Submit via Email
+    </a>
+    <a href="{{ url_for('public_enroll') }}" class="action-btn-secondary">
+        <i class="fas fa-arrow-left"></i> Back to Main Enrollment
+    </a>
+</div>
+
+<!-- FOOTER -->
+<div class="enroll-footer">
+    <p>© 2026 ACSI College Iloilo — Senior High School Enrollment</p>
+    <p style="margin-top:0.25rem;">5th Floor Gaisano City, Lapaz, Iloilo City</p>
+</div>
+
+</body>
+</html>
