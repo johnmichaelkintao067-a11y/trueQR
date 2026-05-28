@@ -763,8 +763,8 @@ def enroll_download():
 
     buf = io.BytesIO()
     doc = SimpleDocTemplate(buf, pagesize=A4,
-        rightMargin=15*mm, leftMargin=15*mm,
-        topMargin=10*mm, bottomMargin=10*mm)
+        rightMargin=12*mm, leftMargin=12*mm,
+        topMargin=8*mm, bottomMargin=8*mm)
 
     styles = getSampleStyleSheet()
     elements = []
@@ -810,7 +810,7 @@ def enroll_download():
         ('ALIGN', (0,0), (0,0), 'CENTER'),
     ]))
     elements.append(header_table)
-    elements.append(Spacer(1, 3*mm))
+    elements.append(Spacer(1, 1.5*mm))
 
     # ── INFO ROW ──
     info_data = [['Semester: _______________', 'School Year: _______________', 'Date: _______________']]
@@ -820,7 +820,7 @@ def enroll_download():
         ('FONTNAME', (0,0), (-1,-1), 'Helvetica'),
     ]))
     elements.append(info_table)
-    elements.append(Spacer(1, 2*mm))
+    elements.append(Spacer(1, 1*mm))
 
     # ── STUDENT CLASSIFICATION ──
     elements.append(Paragraph('Student Classification (Please check)', label_style))
@@ -860,7 +860,7 @@ def enroll_download():
         [Paragraph('<b>MIDDLE NAME:</b>', label_style), ''],
         [Paragraph('<b>MAIDEN NAME:</b>', label_style), ''],
     ]))
-    elements.append(Spacer(1, 2*mm))
+    elements.append(Spacer(1, 1*mm))
 
     # ── ADDRESS ──
     elements.append(Paragraph('<b>Provincial Address:</b>', label_style))
@@ -874,11 +874,11 @@ def enroll_download():
         ('TOPPADDING', (0,0), (-1,-1), 1),
     ]))
     elements.append(addr_table)
-    elements.append(Spacer(1, 1*mm))
+    elements.append(Spacer(1, 0.5*mm))
 
     elements.append(Paragraph('<b>City Address:</b>', label_style))
     elements.append(addr_table)
-    elements.append(Spacer(1, 2*mm))
+    elements.append(Spacer(1, 1*mm))
 
     # ── PERSONAL DETAILS ──
     personal_data = [
@@ -954,19 +954,15 @@ def enroll_download():
         elements.append(Paragraph(course, normal_style))
         elements.append(Spacer(1, 1*mm))
 
-    elements.append(Spacer(1, 5*mm))
+    elements.append(Spacer(1, 3*mm))
 
     # ── SIGNATURES ──
     sig_data = [[
         "Student's Name & Signature\n\n___________________________",
-        '',
         "Cashier's Signature\n\n___________________________",
-    ],[
-        '',
-        '',
         "Registrar's Signature\n\n___________________________",
     ]]
-    sig_table = Table(sig_data, colWidths=[70*mm, 35*mm, 70*mm])
+    sig_table = Table(sig_data, colWidths=[58*mm, 58*mm, 59*mm])
     sig_table.setStyle(TableStyle([
         ('FONTSIZE', (0,0), (-1,-1), 8),
         ('FONTNAME', (0,0), (-1,-1), 'Helvetica'),
@@ -975,9 +971,10 @@ def enroll_download():
         ('TOPPADDING', (0,0), (-1,-1), 3),
     ]))
     elements.append(sig_table)
-    elements.append(Spacer(1, 3*mm))
+    elements.append(Spacer(1, 2*mm))
     elements.append(Paragraph('CR#: _______________', normal_style))
 
+    
     doc.build(elements)
     buf.seek(0)
 
